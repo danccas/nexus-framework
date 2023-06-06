@@ -21,7 +21,9 @@ class Cache
     {
         #$hash = md5($this->id);
         $hash = 'cache_' . $this->id;
-        $this->file = __DIR__ . '/../cache/data/' . $hash . '.json';
+        //$this->file = __DIR__ . '/../cache/data/' . $hash . '.json';
+        $this->file = app()->getPath() . 'cache/data/' . $hash . '.json';
+
     }
     public function set($data)
     {
