@@ -7,11 +7,13 @@ function table($data = -1) {
 function dom() {
   return new Core\DOMDx;
 }
+if (!function_exists('dd')) {
 function dd($data)
 {
   echo "<pre style='color:green;background:#000;padding:10px;'>";
   print_r($data);
   exit;
+}
 }
 function asset($path) {
   return '/' . $path;
@@ -19,9 +21,11 @@ function asset($path) {
 function clock($tt = null) {
   return new Core\Clock($tt);
 }
+if (!function_exists('collect')) {
 function collect($items = null)
 {
   return new Core\Concerns\Collection($items);
+}
 }
 function cache($id)
 {
@@ -60,14 +64,19 @@ function db($cdr = null)
 {
   return new Core\DB($cdr);
 }
+if (!function_exists('request')) {
 function request()
 {
   return Core\Request::instance();
 }
+}
+if (!function_exists('response')) {
 function response()
 {
   return new Core\Response;
 }
+}
+if (!function_exists('route')) {
 function route($name = -1, $params = array())
 {
   if ($name === -1) {
@@ -78,6 +87,7 @@ function route($name = -1, $params = array())
     exit('url no existe: ' . $name);
   }
   return $rr->link($params);
+}
 }
 
 if (!function_exists('getallheaders')) {
