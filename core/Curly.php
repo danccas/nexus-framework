@@ -1,7 +1,10 @@
 <?php
-define('CURLY_POST', 'post');
-define('CURLY_GET', 'get');
-function curly($tipo, &$url, $header = null, $data = null, $cookie = null, &$info = null, $curl = null, $use_tor = false) {
+
+namespace Core;
+
+class Curly
+{
+public static function http($tipo, &$url, $header = null, $data = null, $cookie = null, &$info = null, $curl = null, $use_tor = false) {
   $data = is_array($data) ? http_build_query($data) : $data;
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
@@ -48,4 +51,5 @@ function curly($tipo, &$url, $header = null, $data = null, $cookie = null, &$inf
   $url  = $info['url'];
   //curl_close($ch);
   return $response;
+}
 }
