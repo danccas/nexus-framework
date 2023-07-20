@@ -63,7 +63,12 @@ class Application
     }
     public function registerConfiguresAvailable()
     {
+        
         $this->can_register_configs = true;
+        
+        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+        $dotenv->safeLoad();
+        
         foreach (glob($this->basePath . 'config/*.php') as $filename) {
             require_once $filename;
         }
