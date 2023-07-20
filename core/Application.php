@@ -4,6 +4,7 @@ namespace Core;
 
 use Core\Kernel;
 use Core\Route;
+use Dotenv\Dotenv;
 
 class Application
 {
