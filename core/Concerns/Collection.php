@@ -56,6 +56,9 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     public function next(): void {
         ++$this->position;
     }
+    public function has() {
+      return !empty($this->items);
+    }
     public function valid(): bool {
         return isset($this->items[$this->position]);
     }
