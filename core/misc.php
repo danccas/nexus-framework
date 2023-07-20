@@ -31,6 +31,19 @@ function cache($id)
 {
   return new Core\Cache($id);
 }
+function can_do($context, $action, $value, $minutes) {
+  $cache = cache($context);
+  $ll = $cache->item($action . '_' . $value);
+  if(!empty($ll)) {
+    $res = $ll <= time() - 60 * $minutes;
+    if($res) {
+      $cache->item($action . '_' . $value, time());
+    }
+    return $res;
+  }
+  $cache->item($action . '_' . $value, time());
+  return true;
+}
 function user()
 {
   return App\Auth::instance();
