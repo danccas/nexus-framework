@@ -66,7 +66,7 @@ class Application
         
         $this->can_register_configs = true;
         
-        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+        $dotenv = Dotenv::createUnsafeImmutable($this->basePath);
         $dotenv->safeLoad();
         
         foreach (glob($this->basePath . 'config/*.php') as $filename) {
