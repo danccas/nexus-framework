@@ -17,6 +17,7 @@ class Application
     private $attrs = [];
     private static $instance;
     protected $current_config_route = null;
+    protected $config = [];
 
     public static function instance($container = null)
     {
@@ -39,6 +40,7 @@ class Application
         require_once __DIR__ . '/misc.php';
         $this->initializeKernel();
         $this->registerConfiguresAvailable();
+        $this->registerAliasesAvailable();
         $this->registerRoutesAvailable();
         return $this;
     }
@@ -68,16 +70,44 @@ class Application
         $this->can_register_configs = true;
         $dotenv = Dotenv::createUnsafeImmutable($this->basePath);
         $dotenv->safeLoad();
-        foreach (glob($this->basePath . 'config/*.php') as $filename) {
-            require_once $filename;
+
+        $files_apps = ['app'];
+        foreach ($files_apps as $a) {
+            $url = $this->basePath . 'config/' . $a . '.php';
+            if (file_exists($url)) {
+                $this->config[$a] = (function () use ($url) {
+                    return require_once($url);
+                })();
+            }
         }
         $this->can_register_configs = false;
     }
-    public function currentConfigRoute() {
+    public function registerAliasesAvailable()
+    {
+        $ce = $this;
+        spl_autoload_register(function ($class) use (&$ce) {
+            foreach ($ce->config as $config) {
+                foreach ($config['aliases'] as $key => $val) {
+                    if ($class == $key) {
+                        $file = $this->basePath . lcfirst(str_replace('\\', '/', $val)) . '.php';
+                        if (file_exists($file)) {
+                            class_alias($val, $key, true);
+                        } else {
+                            echo "FF = " . $file;
+                            exit;
+                        }
+                    }
+                }
+            }
+        });
+    }
+    public function currentConfigRoute()
+    {
         return $this->current_config_route;
     }
-    public function registerRouteFile($filename) {
-        if(file_exists($filename)) {
+    public function registerRouteFile($filename)
+    {
+        if (file_exists($filename)) {
             $this->current_config_route = $filename;
             require_once $filename;
         }

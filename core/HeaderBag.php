@@ -71,6 +71,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
     /**
      * @see \IteratorAggregate::getIterator()
      */
+    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         return new \ArrayIterator($this->headers);
@@ -79,6 +80,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
     /**
      * @see \Countable::count()
      */
+    #[\ReturnTypeWillChange]
     public function count()
     {
         return count($this->headers);
