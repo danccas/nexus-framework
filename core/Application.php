@@ -35,7 +35,8 @@ class Application
         }
 
         $this->basePath = $basePath;
-        require_once $this->basePath . 'core/misc.php';
+        #require_once $this->basePath . 'core/misc.php';
+        require_once __DIR__ . '/misc.php';
         $this->initializeKernel();
         $this->registerConfiguresAvailable();
         $this->registerRoutesAvailable();
