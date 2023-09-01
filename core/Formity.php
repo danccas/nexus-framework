@@ -37,8 +37,6 @@ class Formity
     return array_key_exists($cdr, static::$instances);
   }
 
-
-
   /* se agrego  */
   public static function importRoute($route)
   {
@@ -86,9 +84,10 @@ class Formity
   public $assigned_id = 0;
   public $repeat = false;
   public $file = false;
-  public $is_valid = null;
+	public $is_valid = null;
+	private $attrs = [];
   public $fields = array();
-  public $error = array();
+  public $_error = array();
   public $title = null;
   public $description = null;
   public $url = null;
@@ -168,7 +167,7 @@ class Formity
   {
     #$data = Formity::RequestToValues($this, $request);
     Formity::myform_set_values($this, $request, false, 0, false);
-    $this->is_valid = empty($this->error);
+    $this->is_valid = empty($this->_error);
     return true;
   }
   function byRequest($method = null)
@@ -176,27 +175,27 @@ class Formity
     if (!is_null($method)) {
       $this->method = $method;
     }
-    if ($_SERVER['REQUEST_METHOD'] == $this->method) {
-
-			if($this->method == 'PUT' ){
-				parse_str(file_get_contents('php://input'), $_REQUEST);
-			}
-
+    if (request()->method() == $this->method || true) {
       if (!$this->obfuscate) {
-        $data = Formity::RequestToValues($this, $_REQUEST);
-        $this->byButton = $_REQUEST['fmt_bn'];
+        $data = Formity::RequestToValues($this, request()->inputs());
+        $this->byButton = request()->input('fmt_bn');
         Formity::myform_set_values($this, $data, false, 0, false);
-        $this->is_valid = empty($this->error);
+        $this->is_valid = empty($this->_error);
         return true;
-      } elseif (isset($_REQUEST[$this->nToken]) && $_REQUEST[$this->nToken] == $this->token) {
-        if (empty($this->uniqueId) || (!empty($this->uniqueId) && isset($_REQUEST[$this->nToken . 'id']) && $_REQUEST[$this->nToken . 'id'] == $this->uniqueId)) {
-          $data = Formity::RequestToValues($this, $_REQUEST);
-          $this->byButton = empty($_REQUEST['fmt_bn']) ? "" : $_REQUEST['fmt_bn'];
+
+      } elseif (request()->input($this->nToken) == $this->token) {
+				if (empty($this->uniqueId) || (!empty($this->uniqueId) && request()->input($this->nToken . 'id') == $this->uniqueId)) {
+					$inputs = request()->inputs();
+					$data = Formity::RequestToValues($this, $inputs);
+					$this->byButton = request()->input('fmt_bn');
           Formity::myform_set_values($this, $data, false, 0, false);
-          $this->is_valid = empty($this->error);
+          $this->is_valid = empty($this->_error);
           return true;
         }
-      }
+			} else {
+				dd([$this->nToken, request()->input(), request()->input($this->nToken), $this->token]);
+				abort(404);
+			}
     }
     return false;
   }
@@ -256,20 +255,20 @@ class Formity
       if (isset($values[$key]) || is_null($values[$key])) {
         if ($field->isForm()) {
           if ($field->required && empty($values[$key])) {
-            $form->error[] = $field->name . ': Es requerido';
+            $form->_error[] = $field->name . ': Es requerido';
           } elseif (!(!$field->required && empty($values[$key]))) {
             //          $field->seteo = true;
             if (!empty($field->childrang)) {
               //echo "viene2222>>>";
               $error = null;
               if (!$field->declareChildren(count($values[$key]), $error)) {
-                $form->error[] = $field->name . ': Debe contener desde ' . $field->getMin() . ' hasta ' . $field->getMax() . ' elementos, no ' . count($values[$key]);
+                $form->_error[] = $field->name . ': Debe contener desde ' . $field->getMin() . ' hasta ' . $field->getMax() . ' elementos, no ' . count($values[$key]);
               } else {
                 foreach ($field->children as $k2 => $c) {
                   Formity::myform_set_values($c, $values[$key][$k2], $force, $nivel + 1, $change);
-                  if (!empty($c->error)) {
-                    foreach ($c->error as $e) {
-                      $form->error[] = $field->name . ' #' . ($k2 + 1) . ': ' . $e;
+                  if (!empty($c->_error)) {
+                    foreach ($c->_error as $e) {
+                      $form->_error[] = $field->name . ' #' . ($k2 + 1) . ': ' . $e;
                     }
                   }
                 }
@@ -291,10 +290,20 @@ class Formity
     }
   }
   function isValid(&$error = null)
-  {
-    $error = $this->error;
+	{
+		if(!$this->byRequest($error)) {
+			return false;
+		}
+    $error = $this->_error;
     return $this->is_valid;
-  }
+	}
+	public function valid() {
+		$error = null;
+		return $this->isValid($error);
+	}
+	function error() {
+		return $this->_error;
+	}
   function addField($key, $type = 'input:text', $analyze = null)
   {
     $div = ':';
@@ -403,7 +412,10 @@ class Formity
   function setField($n, $v)
   {
     $this->fields[$n] = $n;
-  }
+	}
+	function data() {
+		return (object) $this->getData();
+	}
   function getData($onlySet = false)
   {
     $fields = array_filter($this->fields, function ($n) use ($onlySet) {
@@ -470,21 +482,25 @@ class Formity
   }
   function submit($url, $params = array())
   {
-    $url = route($url,$params);
-    
-    foreach ($params as $k => $v) {
+    $url = route($url, $params);
+    /*foreach ($params as $k => $v) {
       $url = str_replace(':' . $k, $v, $url);
       unset($params[$k]);
-    }
+		}*/
     $this->url = $url;
     return $this;
   }
-  function begin($attrs = null )
+  function begin($attrs = [])
   {
-    return $this->buildHeader('POST', $this->url,$attrs);
-  }
-  function buildHeader($method = 'POST', $url = null, $attrs = null)
-  {
+    return $this->buildHeader('POST', $this->url, $attrs);
+	}
+	function attr($key, $value) {
+		$this->attrs[$key] = $value;
+		return $this;
+	}
+  function buildHeader($method = 'POST', $url = null, $attrs = [])
+	{
+		$attrs = array_merge($this->attrs, $attrs);
     $attrs['id'] = $this->id;
     $attrs['data-id'] = $this->id;
     $attrs['data-base'] = ''; #Route::uri(null, null, null, '');
@@ -494,8 +510,7 @@ class Formity
       $attrs['action'] = '#' . $this->id;
     }
     if (!empty($url)) {
-      $attrs['action'] = $url;
-    } else {
+			$attrs['action'] = $url;
     }
     if (!empty($this->file)) {
       $attrs['enctype'] = 'multipart/form-data';
@@ -508,7 +523,7 @@ class Formity
     $attrs = !empty($attrs) ? implode(' ', $attrs) : '';
 
     $html = '<!-- Generado Automaticamento -->';
-    $html .= '<form data-formity Popup-form method="' . $this->method . '" ' . $attrs . '>';
+    $html .= '<form data-formity popup-form method="' . $this->method . '" ' . $attrs . '>';
     $html .= '<input type="hidden" name="' . $this->nToken . '" value="' . $this->token . '" />';
     if (!empty($this->uniqueId)) {
       $html .= '<input type="hidden" name="' . $this->nToken . 'id" value="' . $this->uniqueId . '" />';
@@ -551,10 +566,10 @@ class Formity
         $rp .= '</div>';
       } */
     }
-    if (!empty($form->error)) {
+    if (!empty($form->_error)) {
       $rp .= '<article class="message is-danger"><div class="message-header">Debes seguir estas indicaciones:</div>';
       $rp .= '<div class="message-body"><div class="content"><ul style="margin-top:0px;">';
-      foreach ($form->error as $e) {
+      foreach ($form->_error as $e) {
         $rp .= "<li>" . $e . "</li>\n";
       }
       $rp .= "</ul></div></div></article>";

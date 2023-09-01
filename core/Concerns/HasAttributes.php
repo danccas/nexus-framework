@@ -307,14 +307,15 @@ trait HasAttributes
     {
         if (! $key) {
             return;
-        }
+				}
+
 
         // If the attribute exists in the attribute array or has a "get" mutator we will
         // get the attribute's value. Otherwise, we will proceed as if the developers
         // are asking for a relationship's value. This covers both types of values.
         if (array_key_exists($key, $this->attributes) ||
             array_key_exists($key, $this->casts) ||
-            $this->hasGetMutator($key) ||
+#            $this->hasGetMutator($key) ||
             $this->isClassCastable($key)) {
             return $this->getAttributeValue($key);
         }
@@ -325,7 +326,7 @@ trait HasAttributes
         if (method_exists(self::class, $key)) {
             return;
         }
-
+				return null;
         return $this->getRelationValue($key);
     }
     public function getAttributeValue($key)
@@ -485,9 +486,17 @@ trait HasAttributes
     }
     public function setAttribute($key, $value)
     {
-        $this->attributes[$key] = $value;
-        return $this;
+			$this->attributes[$key] = $value;
+      return $this;
+		}
+		public function setChange($key, $value)
+    {
+      $this->changes[$key] = $value;
+      return $this;
     }
+		public function getChanges() {
+			return $this->changes;
+		}
     protected function isDateAttribute($key)
     {
         return in_array($key, $this->getDates(), true) ||

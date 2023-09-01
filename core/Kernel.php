@@ -34,8 +34,12 @@ class Kernel
         $this->routeMiddleware = (new KernelHttp)->routeMiddleware;
     }
     public function getMiddleware($key)
-    {
-        return isset($this->routeMiddleware[$key]) ? new $this->routeMiddleware[$key] : null;
+		{
+			if(!empty($this->routeMiddleware[$key])) {
+				$Mclass = $this->routeMiddleware[$key];
+				return new $Mclass;
+			}
+			return null;
     }
     public function setRequest($request)
     {
@@ -97,7 +101,7 @@ class Kernel
         return null;
     }
     public function debug()
-    {
+		{
         $rp = [];
         $request = new Request;
         echo "<table border=\"1\">";
@@ -110,7 +114,7 @@ class Kernel
             echo "<td>" . implode(',', $e->method) . "</td>";
             echo "<td>" . $e->regex . "</td>";
             echo "<td>" . $e->callback . "</td>";
-            echo "<td>" . $e->getName() . "</td>";
+            echo "<td>" . implode(',', $e->getName()) . "</td>";
             echo "<td>" . implode(', ', array_map(function ($n) {
                 return trim($n->type . ' $' . $n->parameter);
             }, $e->getArguments())) . "</td>";
@@ -125,23 +129,35 @@ class Kernel
     }
     public function terminate()
     {
-        if (isset($_GET['internal'])) {
-            return $this->debug();
-            exit;
-        }
+				$is_match = false;
         $request = new Request;
-        $response = new Response();
+        $response = Response::instance();
         foreach ($this->routes as $e) {
-            if ($e->isMatch($request)) {
-                $request->route = $e;
-                $response->load($e->execute($request, $response));
-                echo $response->__toString();
-                exit;
-            }
-        }
+					if ($e->isMatch($request)) {
+						$is_match = true;
+	          $request->route = $e;
+            $response = $e->execute($request, $response);
+						if($response instanceof Response) {
+  						echo $response->execute();
+							exit;
 
-        echo "<h2>== 404</h2>";
-      exit();  $this->debug();
-        exit('== 404');
+						} elseif(is_object($response)) {
+              echo $response->__toString();
+							exit;
+
+						} else {
+							echo $response;
+							exit;
+						}
+          }
+				}
+				if(!$is_match) {
+					if(isset($_GET['ddebug'])) {
+						echo $this->debug();
+						exit;
+					} else {
+						abort(404);
+					}
+				}
     }
 }

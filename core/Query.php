@@ -57,8 +57,9 @@ class Query {
         return $this;
     }
     public function orderBy($campo, $by = 'ASC') {
-        $this->action = 'get';
-        return $this;
+			$this->action = 'get';
+			$this->dbconnect->engine()->order($campo, $by);
+      return $this;
     }
     public function first() {
         $this->action = 'get';
@@ -74,6 +75,12 @@ class Query {
         $this->action = 'insert';
         $this->values = $values;
         $this->dbconnect->engine()->insert($values);
+        return $this->get();
+		}
+		public function update($values) {
+        $this->action = 'update';
+        $this->values = $values;
+        $this->dbconnect->engine()->update($values);
         return $this->get();
     }
     public function get() {

@@ -41,7 +41,10 @@ class PaginationQuery
     public $link_prev    = null;
     public $link_next    = null;
 
-    public $actions      = [];
+		public $actions      = [];
+		public $querys = [];
+
+	  protected $_view = null;
 
     public function query($q, $params = [])
     {
@@ -208,7 +211,8 @@ class PaginationQuery
             FROM (" . $query . ") dz
             GROUP BY dz." . $this->inputs['column'] . "
             ORDER BY 2 DESC, 1 ASC
-            LIMIT 50";
+						LIMIT 50";
+										$this->querys[] = [$query, $this->query_b];
                     $data = db()->collect($query, $this->query_b);
                     $box = !empty($ee) && is_callable($ee) ? $ee(new \stdClass, $this->inputs['column']) : null;
                     $valores = $data->toArray();
@@ -317,11 +321,13 @@ class PaginationQuery
         $queryCount = $this->queryAddFilters($queryCount);
 
         if (empty($this->countEstimate)) {
-            $cantidad = "SELECT count(*) total FROM (" . $queryCount . ")x";
+					$cantidad = "SELECT count(*) total FROM (" . $queryCount . ")x";
+					$this->querys[] = [$cantidad, $this->query_b];
             $cantidad = db()->collect($cantidad, $this->query_b);
             $numero   = $cantidad->first()->total;
         } else {
-            $cantidad = "EXPLAIN (FORMAT JSON) " . $queryCount;
+					$cantidad = "EXPLAIN (FORMAT JSON) " . $queryCount;
+					$this->querys[] = [$cantidad, $this->query_b];
             $cantidad = db()->collect($cantidad, $this->query_b);
             $log      = $cantidad->first()->{'QUERY PLAN'};
             $log      = json_decode($log);
@@ -332,7 +338,7 @@ class PaginationQuery
 
         $query = $this->queryAddFilters($this->query_a);
 
-        if (strpos($query, '--pagination') !== FALSE && empty($this->filters)) {
+        if (strpos($query, '--pagination') !== FALSE) { #&& empty($this->filters)) {
             $query = str_replace(
                 '--pagination',
                 " LIMIT " . $this->per_page . " OFFSET " . $this->offset,
@@ -345,7 +351,8 @@ class PaginationQuery
         LIMIT " . $this->per_page . " OFFSET " . $this->offset;
         }
 
-        $query = str_replace('--started', '', $query);
+				$query = str_replace('--started', '', $query);
+				$this->querys[] = [$query, $this->query_b];
         $data = db()->collect($query, $this->query_b);
         $this->time_count = $cantidad->execute->time;
         $this->time_query = $data->execute->time;
@@ -376,7 +383,16 @@ class PaginationQuery
             }
         }
 
-        $ce = &$this;
+				$ce = &$this;
+
+    if(!empty($this->_view)) {
+      $this->cbRow = function($n) use($ce) {
+        $html = $ce->_view->append(['row' => $n]);
+				$html = explode('@split', $html);
+				return array_map(function($n) { return trim($n); }, $html);
+      };
+    }
+
         if (is_array($this->items)) {
             $this->items = array_map(function ($n) use (&$ce) {
                 if (!empty($ce->cbRow)) {
@@ -470,7 +486,8 @@ class PaginationQuery
     }
     public function getRow($id)
     {
-        $query = str_replace('--row', '', $this->query_a);
+			$query = str_replace('--row', '', $this->query_a);
+			$this->querys[] = [$query, $this->query_b + ['id' => $id]];
         $data = db()->collect($query, $this->query_b + [
             'id' => $id
         ]);
@@ -517,7 +534,12 @@ class PaginationQuery
             $this->events[$field][$event] = $cb;
         }
         return $this;
-    }
+		}
+  public function view($name, $params = []) {
+    $this->_view = (new Blade($name))->append($params);
+    return $this;
+  }
+
     public function map($cb)
     {
         $this->cbRow = $cb;
@@ -542,7 +564,8 @@ class PaginationQuery
         $this->execute();
         return [
             'success' => true,
-            'result' => [
+						'result' => [
+//								'querys' => $this->querys,
                 'total' => $this->total,
                 'per_page' => $this->per_page,
                 'offset' => $this->offset,

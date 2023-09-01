@@ -20,7 +20,7 @@ class RouteResource {
             'store'    => (new Route)->setMethod('POST')->setRegex($regex)->setController($controller . '@store'),
             'show'     => (new Route)->setMethod('GET')->setRegex($regex . '/:' . $regex)->setController($controller . '@show'),
             'edit'     => (new Route)->setMethod('GET')->setRegex($regex . '/:' . $regex . '/edit')->setController($controller . '@edit'),
-            'update'   => (new Route)->setMethod('put')->setRegex($regex . '/:' . $regex)->setController($controller . '@update'),
+            'update'   => (new Route)->setMethod('PUT')->setRegex($regex . '/:' . $regex)->setController($controller . '@update'),
             'destroy'  => (new Route)->setMethod('DELETE')->setRegex($regex . '/:' . $regex)->setController($controller . '@destroy'),
         );
         $this->name($regex);
@@ -36,14 +36,15 @@ class RouteResource {
         return $this;
     }
 
-    function middleware($midd) {
+		function middleware($midd) {
         foreach($this->routes as $k => $r) {
             $r->middleware($midd);
         }
         return $this;
     }
 
-    function parameter($name) {
+		function parameter($name) {
+			$this->name($name);
         $reem = ':' . $this->regex;
         foreach($this->routes as $k => $r) {
             $r->setRegex(str_replace($reem, ':' . $name, $r->getRegex()));

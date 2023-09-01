@@ -1,6 +1,7 @@
 <?php
 namespace Core;
 
+use Core\Concerns\Collection;
 
 class DOMDx {
     protected $elem;
@@ -13,28 +14,45 @@ class DOMDx {
     {
         $this->elem = new \DOMDocument();
     }
-    public function attr($key, $value) {
-        $this->root->setAttribute($key, $value);
+		public function attr($key, $value, $element = null) {
+			if($element !== null) {
+				$box = $this->root->getElementsByTagName($element);
+				$box = $box[0];
+			} else {
+				$box = $this->root;
+			}
+        $box->setAttribute($key, $value);
         return $this;
     }
     public function cache($key) {
         $cache = cache($key)->dump();
-        $this->set(json_decode(json_encode($cache->data), true));
+        $this->set(json_decode(json_encode($cache->data)));
         $this->mfooter = date('d/m/Y h:i:s A', $cache->time);
         return $this;
     }
-    public function map($callback) {
-        $this->data = collect($this->data)->map($callback);
-        return $this;
+		public function map($callback) {
+			$this->data = collect($this->data)->map($callback);
+      return $this;
     }
-    public function set($data) {
-        $this->data = $data;
-        return $this;
+		public function set($data) {
+			if($data instanceof Collection) {
+				$this->data = $data;
+        $this->mfooter = date('d/m/Y h:i:s A', $data->execute->unix);
+      } else {
+				$this->data = $data;
+			}
+      return $this;
     }
-    public function table($datax = -1) {
-        if($datax == -1) {
+		public function table($datax = -1) {
+			if($datax instanceof Collection) {
+				$this->set($datax);
+				$this->mfooter = date('d/m/Y h:i:s A', $datax->execute->unix);
+				$datax = -1;
+      }
+			if($datax == -1) {
             $datax = $this->data;
-        }
+			}
+				$this->buildheader();
         $div = $this->createElementRoot('div');
         $table = $this->createElement('table');
         $table->setAttribute('style', 'width: 100%;');

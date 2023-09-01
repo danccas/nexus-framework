@@ -4,11 +4,13 @@ namespace Core;
 
 use Core\Concerns\Collection;
 use Core\DBCore;
+use Core\Database\Builder;
+use Core\Database\Raw;
 use Core\PaginationQuery;
 
 class DB extends DBCore
 {
-  public function execQuery(Query $query)
+  public function execQuery(Builder $query)
   {
     $this->setQuery($query);
     return $this;
@@ -41,7 +43,10 @@ class DB extends DBCore
   }
   function escape($texto) {
     return str_replace("'", "\'", $texto);
-  }
+	}
+	public static function raw($val) {
+		return new Raw($val);
+	}
   function collect($query, $params = [])
   {
     return $this->select($query, $params);

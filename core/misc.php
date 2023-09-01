@@ -1,47 +1,75 @@
 <?php
-
 use App\Auth;
+function is_type($val, $type) {
+	if($type == 'int') {
+		return is_numeric($val);
+	} else if($type == 'string') {
+		return true;
+	}
+	return false;
+}
+if (!function_exists('array_is_list')) {
+    function array_is_list(array $arr)
+    {
+        if ($arr === []) {
+            return true;
+        }
+        return array_keys($arr) === range(0, count($arr) - 1);
+    }
+}
 function table($data = -1) {
   return dom()->table($data);
 }
 function dom() {
   return new Core\DOMDx;
 }
-if (!function_exists('dd')) {
 function dd($data)
 {
   echo "<pre style='color:green;background:#000;padding:10px;'>";
   print_r($data);
   exit;
 }
-}
 function asset($path) {
   return '/' . $path;
 }
-function clock($tt = null) {
+function clock($tt = -1) {
   return new Core\Clock($tt);
 }
+
 if (!function_exists('collect')) {
-function collect($items = null)
-{
-  return new Core\Concerns\Collection($items);
-}
+	function collect($items = null)
+	{
+		return new Core\Concerns\Collection($items);
+	}
 }
 function cache($id)
 {
   return new Core\Cache($id);
 }
-function can_do($context, $action, $value, $minutes) {
+#function can_do($content, $action, $value, $minutes) {
+#	return can_do($content, $action . $value, $minutes);
+#}
+function can_do($context, $action, $seconds, $times = 1) {
   $cache = cache($context);
-  $ll = $cache->item($action . '_' . $value);
-  if(!empty($ll)) {
-    $res = $ll <= time() - 60 * $minutes;
-    if($res) {
-      $cache->item($action . '_' . $value, time());
+	$ll = $cache->item($action);
+	$pass = 0;
+	if(!empty($ll)) {
+		foreach($ll as $t) {
+			$res = $t >= time() - $seconds;
+			if($res) {
+				$pass++;
+			} else {
+				$cache->item_delete($action, $t);
+			}
+		}
+    if($pass < $times) {
+			$cache->item_append($action, time());
+			return true;
+		} else {
+			return false;
     }
-    return $res;
   }
-  $cache->item($action . '_' . $value, time());
+  $cache->item_append($action, time());
   return true;
 }
 function user()
@@ -52,18 +80,37 @@ function session()
 {
   return Core\Session::instance();
 }
+function back()
+{
+  return response()->back();
+}
 function redirect($route)
 {
   return response()->redirect($route);
 }
+if (! function_exists('abort_if')) {
+function abort_if($boolean, $code, $message = '', array $headers = [])
+{
+        if ($boolean) {
+            abort($code, $message, $headers);
+        }
+    }
+}
+if (! function_exists('abort_unless')) {
+function abort_unless($boolean, $code, $message = '', array $headers = [])
+{
+        if (! $boolean) {
+            abort($code, $message, $headers);
+        }
+    }
+}
+
+function abort($status, $message = null, $headers = []) {
+	return response()->abort($status, $message);
+}
 function view($theme, $variables = [])
 {
-  $theme = (new Core\Blade($theme));
-  if($theme->getId() > 1) {
-    echo "Error = No se puede usar view() en views";
-    exit;
-  }
-  return $theme->append($variables);
+	return response()->view($theme, $variables);
 }
 function app($container = null)
 {
@@ -77,19 +124,18 @@ function db($cdr = null)
 {
   return new Core\DB($cdr);
 }
-if (!function_exists('request')) {
 function request()
 {
   return Core\Request::instance();
 }
-}
-if (!function_exists('response')) {
 function response()
 {
-  return new Core\Response;
+  return Core\Response::instance();
 }
+function blade() {
+	return response()->blade();
 }
-if (!function_exists('route')) {
+
 function route($name = -1, $params = array())
 {
   if ($name === -1) {
@@ -98,9 +144,9 @@ function route($name = -1, $params = array())
   $rr = kernel()->findRoute($name);
   if(empty($rr)) {
     exit('url no existe: ' . $name);
-  }
-  return $rr->link($params);
-}
+	}
+	$rr->setParameters($params);
+	return $rr;
 }
 
 if (!function_exists('getallheaders')) {
@@ -198,18 +244,20 @@ function obtener_iniciales($n)
   return strtoupper($n);
 }
 function geo_address( $lat, $lng){
-  try{
 
-  $url = 'http://209.145.54.12/geo_address?lat=' . $lat . '&lon=' . $lng;
-  $cnx = curl_init();
-  curl_setopt($cnx, CURLOPT_URL, $url);
-  curl_setopt($cnx, CURLOPT_RETURNTRANSFER, true);
+	$direccion = '--';
+
+  try {
+		/*$url = 'http://209.145.54.12/geo_address?lat=' . $lat . '&lon=' . $lng;
+		$cnx = curl_init();
+		curl_setopt($cnx, CURLOPT_URL, $url);
+		curl_setopt($cnx, CURLOPT_RETURNTRANSFER, true);
 
 
-  $direccion = curl_exec($cnx);
-  curl_close($cnx);
-  return $direccion;
-  }catch( \Exception $e){
+		$direccion = curl_exec($cnx);
+		curl_close($cnx);*/
+		return $direccion;
+  } catch ( \Exception $e){
     return '--';
   }
 }
@@ -1108,6 +1156,32 @@ function generar_slug($str, $mono = false)
   $a = preg_replace("/-\Z/", '', $a);
 
   return $a;
+}
+function array2csv($data, $delimiter = ',', $enclosure = '"', $escape_char = "\\")
+{
+  $f = fopen('php://memory', 'r+');
+  foreach ($data as $item) {
+    fputcsv($f, $item, $delimiter, $enclosure, $escape_char);
+  }
+  rewind($f);
+  return stream_get_contents($f);
+}
+function array_to_csv_download($array, $filename = "export.csv", $delimiter=";") {
+    // open raw memory as file so no temp files needed, you might run out of memory though
+    $f = fopen('php://memory', 'w'); 
+    // loop over the input array
+    foreach ($array as $line) { 
+        // generate csv lines from the inner arrays
+        fputcsv($f, $line, $delimiter); 
+    }
+    // reset the file pointer to the start of the file
+    fseek($f, 0);
+    // tell the browser it's going to be a csv file
+    header('Content-Type: text/csv');
+    // tell the browser we want to save it instead of displaying it
+    header('Content-Disposition: attachment; filename="'.$filename.'";');
+    // make php send the generated csv lines to the browser
+    fpassthru($f);
 }
 function standard_string($string)
 {

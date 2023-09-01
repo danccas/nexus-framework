@@ -521,22 +521,33 @@ class Excelity
     $this->save();
     exit;
   }
-  function save($save = 'php://output')
+	function attachmentFile($name){
+    return $this->save( 'php://output', true );
+	}
+  function save($save = 'php://output', $attachment = false )
   {
     $this->buildHeaderandStyle();
     $this->ExcelBase->setActiveSheetIndex(0);
-    $this->ExcelBase->getProperties()->setCreator("SRT")
-      ->setLastModifiedBy("SRT")
+    $this->ExcelBase->getProperties()->setCreator("SIMACI")
+      ->setLastModifiedBy("SIMACI")
       ->setTitle("Office 2007 XLSX Test Document")
       ->setSubject("Office 2007 XLSX Test Document")
-      ->setDescription("SRT")
+      ->setDescription("SIMACI")
       ->setKeywords("office 2007 openxml php")
-      ->setCategory("SRT");
+      ->setCategory("SIMACI");
     // $objWriter = IOFactory::createWriter($this->ExcelBase, 'Excel2007');
     // $objWriter->save($save);
+		if ($attachment ) {
+			$writer = new Xlsx($this->ExcelBase);
+			ob_start();
+			$writer->save($save);
+			$data = ob_get_clean(); 
+			return $data;
+		} else {
+			$writer = new Xlsx($this->ExcelBase);
+			$writer->save($save);
+		}
 
-    $writer = new Xlsx($this->ExcelBase);
-    $writer->save($save);
   }
   private function obtener_ancho_body($body)
   {

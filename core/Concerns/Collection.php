@@ -55,12 +55,26 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     }
     public function next(): void {
         ++$this->position;
-    }
-    public function has() {
-      return !empty($this->items);
-    }
+		}
+		public function has() {
+			return !empty($this->items);
+		}
     public function valid(): bool {
         return isset($this->items[$this->position]);
+		}
+		public function pluck($value, $key = null) {
+			$rp = [];
+			$ii = $this->toArray();
+			if($key === null) {
+				return array_map(function($n) use($value) {
+					return $n->{$value};
+				}, $ii);
+			}
+			foreach($ii as $n) {
+				//dd([$key, $value, $n->{$key}, $n->{$value}]);
+			  $rp[$n->{$key}] = $n->{$value};
+			}
+			return $rp;
     }
     public function map(callable $callback)
     {

@@ -1,6 +1,7 @@
 <?php
 
 namespace Core;
+use Core\Database\Builder;
 
 class DBCore extends \Core\DBFuncs
 {
@@ -14,10 +15,13 @@ class DBCore extends \Core\DBFuncs
 
   public function __construct($cdr = null)
   {
-    $this->cdr = $cdr;
+		$this->cdr = $cdr;
     if(empty($cdr)) {
       $this->cdr = static::defaultCDR();
-    }
+		} else {
+			static::$default_cdr = $cdr;
+		}
+//		print_r($this->cdr);
   }
   public static function createDSN($cdr, $dsn, $user = null, $pass = null)
   {
@@ -36,7 +40,7 @@ class DBCore extends \Core\DBFuncs
   public static function defaultCDR() {
     return static::$default_cdr;
   }
-  public function setQuery(Query $query)
+  public function setQuery(Builder $query)
   {
     $this->query = $query;
     return $this;
@@ -52,7 +56,8 @@ class DBCore extends \Core\DBFuncs
   public function connection() {
     if(!$this->hashConnection()) {
       return false;
-    }
+		}
+//		print_r($this->cdr);
     return static::$listConnection[$this->cdr];
   }
   private function engine() {
@@ -73,14 +78,18 @@ class DBCore extends \Core\DBFuncs
       }
       return $this->connection()->execute($query, $prepare);
     }
+
     function exec_get($sql = null, $prepare = null, $first = false)
     {
       $time_start = microtime(true);
       $is_cached = false;
       $model = null;
       if (is_null($sql)) {
-          if ($this->query instanceof Query) {
-              $comodin = $this->query->prepareQuery();
+          if ($this->query instanceof Builder) {
+						$comodin = $this->query->prepareQuery();
+						if($comodin === null) {
+							return new \Core\Concerns\Collection([]);
+						}
               $sql = $comodin[0];
               $prepare = $comodin[1];
               unset($comodin);
@@ -92,19 +101,27 @@ class DBCore extends \Core\DBFuncs
       }
       if ($this->cache) {
           $token = 'query_' . md5(json_encode([$sql, $prepare]));
-          echo "Token: " . $token . "\n";
           $cache = cache($token)->expire($this->cacheExpire);
           if(!$cache->hasExpired()) {
-            $rp = $cache->get();
+						$rp = $cache->dump();
+						$unix = $rp->time;
+						$rp = $rp->data;
             $is_cached = true;
             goto saltarCache;
           }
-      }
+			}
+			$unix = time();
       $result = $this->exec($sql, $prepare, false);
       if ($result === false) {
           $rp = false;
       } else {
           $rp = $this->engine()->fetch($result, $first);
+			}
+			$diff = microtime(true) - $time_start;
+			$sec = intval($diff);
+      $micro = $diff - $sec;
+      if($diff > 1) {
+        file_put_contents('/tmp/query_slow.log', date('Y-m-d H:i:s') . ' => [' . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . '] ' . $sql . " = " . json_encode($prepare) . "\n\n", FILE_APPEND | LOCK_EX);
       }
 
       if ($this->cache && !empty($cache)) {
@@ -112,7 +129,7 @@ class DBCore extends \Core\DBFuncs
       }
 
       saltarCache:
-      $diff = microtime(true) - $time_start;
+			$diff = microtime(true) - $time_start;
 
       if ((!empty($model) && is_array($rp)) || true) {
         if(!empty($model)) {
@@ -129,7 +146,8 @@ class DBCore extends \Core\DBFuncs
         $rp->execute = new \stdClass();
         $rp->execute->cache_expire  = $this->cacheExpire;
         $rp->execute->cache_current = $is_cached;
-        $rp->execute->cache_service = $this->cache;
+				$rp->execute->cache_service = $this->cache;
+				$rp->execute->unix  = $unix;
         $rp->execute->time  = date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro));
       }
       return $rp;
@@ -206,8 +224,20 @@ class DBCore extends \Core\DBFuncs
       return date("Y-m-d H:i:s.u", $t);
     } elseif (is_null($t)) {
       return date("Y-m-d H:i:s.u");
-    } else {
-      return date("Y-m-d H:i:s.u", strtotime($t));
+		} else {
+
+			$unix = strtotime($t);
+			if($unix === false) {
+				if($t != ($r = str_replace('/', '-', $t))) {
+					$unix = strtotime($r);
+					if($unix == false) {
+						$r = str_replace(' AM', '', $r);
+						$r = str_replace(' PM', '', $r);
+						$unix = strtotime($r);
+					}
+				}
+			}
+      return date("Y-m-d H:i:s.u", $unix);
     }
   }
   function transaction($callback = null)

@@ -3,11 +3,14 @@
 namespace Core;
 
 use Core\Concerns\Collection;
+use Core\Database\Builder;
 
-class Model implements  \JsonSerializable 
+class Model implements \JsonSerializable 
 {
-    use Concerns\HasAttributes;
-    use Concerns\GuardsAttributes;
+	use Concerns\HasAttributes;
+	use Concerns\HasGlobalScopes;
+	use Concerns\GuardsAttributes;
+	use Concerns\HasEvents;
 
     protected $connection;
     protected $table;
@@ -17,9 +20,11 @@ class Model implements  \JsonSerializable
     protected static $booted = [];
     protected static $traitInitializers = [];
     protected $fireEvents = [];
+		protected static $instance = [];
+		protected static $globalScopes = [];
+		public $wasRecentlyCreated = false;
+    protected static $dispatcher;
 
-
-    protected static $instance = [];
     public static function instance()
     {
         if (!isset(static::$instance[static::class])) {
@@ -38,8 +43,10 @@ class Model implements  \JsonSerializable
         if (!isset(static::$booted[static::class])) {
             static::$booted[static::class] = true;
 
-            $this->fireModelEvent('booting', false);
-            static::boot();
+						$this->fireModelEvent('booting', false);
+						static::booting();
+						static::boot();
+						static::booted();
             $this->bootConnection();
             $this->fireModelEvent('booted', false);
         }
@@ -57,28 +64,40 @@ class Model implements  \JsonSerializable
     {
         return $this->table;
     }
-    private static function instanceQuery()
-    {
-        return (new Query)->setModel(static::instance());
-    }
+#    private static function instanceQuery()
+#    {
+#			return static::query();
+#    }
     public static function find($id)
     {
-        return (new Query)->setModel(static::instance())->find($id)->get();
+        return static::query()->find($id)->get();
     }
     public static function where($key, $compare, $value)
     {
-        return (new Query)->setModel(static::instance())->where($key, $compare, $value);
+        return static::query()->where($key, $compare, $value);
+		}
+		public function hasMany($model, $fk_id)
+		{
+        return $model::query()->where($fk_id, '=', $this->id);
+		}
+		public function belongsTo($model, $field_id, $fk_id = 'id')
+		{
+      return $model::query()->where($fk_id, '=', $this->{$field_id});
     }
-    public static function create($values) {
-        return (new Query)->setModel(static::instance())->insert($values)->first();
+		public static function create($values) {
+			$values = (array) $values;
+			$model = new static($values);
+			return $model->performInsert($model->query());
     }
     public function update(array $attributes = [], array $options = [])
     {
         if (!$this->exists) {
             return false;
         }
-
-        return $this->fill($attributes)->save($options);
+				foreach($attributes as $k => $v) {
+					$this->{$k} = $v;
+				}
+        return $this->save($options);
     }
     public function setExists()
     {
@@ -91,16 +110,21 @@ class Model implements  \JsonSerializable
     }
     public function fill(array $attributes)
     {
-        $totallyGuarded = $this->totallyGuarded();
+			$totallyGuarded = $this->totallyGuarded();
 
         if (!empty($attributes[$this->primaryKey])) {
             $this->exists = true;
-        }
+				}
+				foreach ($attributes as $key => $value) {
+					$this->setAttribute($key, $value);
+				}
+				return $this;
         foreach ($this->fillableFromArray($attributes) as $key => $value) {
             if ($this->isFillable($key)) {
                 $this->setAttribute($key, $value);
-            } elseif ($totallyGuarded) {
-                exit('ERRRORR');
+						} elseif ($totallyGuarded) {
+							$this->setAttribute($key, $value);
+//                exit('ERRRORR');
             }
         }
 
@@ -115,7 +139,9 @@ class Model implements  \JsonSerializable
 
     public function save(array $options = [])
     {
-        $this->mergeAttributesFromClassCasts();
+			$this->mergeAttributesFromClassCasts();
+
+			$query = static::query();
 
         // If the "saving" event returns false we'll bail out of the save and return
         // false, indicating that the save failed. This provides a chance for any
@@ -127,15 +153,15 @@ class Model implements  \JsonSerializable
         // If the model already exists in the database we can just update our record
         // that is already in this database using the current IDs in this "where"
         // clause to only update this model. Otherwise, we'll just insert them.
-        if ($this->exists) {
-            exit('EDITAR');
+				if ($this->exists) {
+					return $this->performUpdate($query);
         }
 
         // If the model is brand new, we'll insert it into our database and set the
         // ID attribute on the model to the value of the newly inserted row's ID
         // which is typically an auto-increment value managed by the database.
-        else {
-            exit('REGISTRAR');
+				else {
+					return $this->performInsert($query);
         }
 
         // If the model is successfully saved, we need to do a few more things once
@@ -143,6 +169,84 @@ class Model implements  \JsonSerializable
         // we need to happen after a model gets successfully saved right here.
 
         return true;
+		}
+    protected function performUpdate(Builder $query)
+    {
+        // If the updating event returns false, we will cancel the update operation so
+        // developers can hook Validation systems into their models and cancel this
+        // operation if the model does not pass validation. Otherwise, we update.
+        if ($this->fireModelEvent('updating') === false) {
+            return false;
+        }
+
+        // First we need to create a fresh query instance and touch the creation and
+        // update timestamp on the model which are maintained by us for developer
+        // convenience. Then we will just continue saving the model instances.
+#        if ($this->usesTimestamps()) {
+#            $this->updateTimestamps();
+#        }
+
+        // Once we have run the update operation, we will fire the "updated" event for
+        // this model instance. This will allow developers to hook into these after
+        // models are updated, giving them a chance to do any special processing.
+
+				$res = $this->setKeysForSaveQuery($query)
+		   				->update($this->getChanges())->first();
+
+            $this->fireModelEvent('updated', false);
+#        }
+
+        return $res;
+    }
+		protected function performInsert(Builder $query)
+    {
+        if ($this->fireModelEvent('creating') === false) {
+            return false;
+        }
+
+        // First we'll need to create a fresh query instance and touch the creation and
+        // update timestamps on this model, which are maintained by us for developer
+        // convenience. After, we will just continue saving these model instances.
+#        if ($this->usesTimestamps()) {
+#            $this->updateTimestamps();
+#        }
+
+        // If the model has an incrementing key, we can use the "insertGetId" method on
+        // the query builder, which will give us back the final inserted ID for this
+				// table from the database. Not all tables have to be incrementing though.
+
+        $attributes = $this->getAttributes();
+#        if ($this->getIncrementing()) {
+#            $this->insertAndSetId($query, $attributes);
+#        }
+
+        // If the table isn't incrementing we'll simply insert these attributes as they
+        // are. These attribute arrays must contain an "id" column previously placed
+        // there by the developer as the manually determined key for these models.
+#        else {
+#            if (empty($attributes)) {
+#                return true;
+#            }
+
+            $res = $query->insert($attributes)->first();
+				#        }
+
+
+        // We will go ahead and set the exists property to true, so that it is set when
+        // the created event is fired, just in case the developer tries to update it
+        // during the event. This will allow them to do so and run an update here.
+        $this->exists = true;
+
+        $this->wasRecentlyCreated = true;
+
+        $this->fireModelEvent('created', false);
+
+        return $res;
+    }
+		protected function setKeysForSaveQuery(Builder $query)
+		{
+        $query->where($this->getPrimaryKey(), '=', $this->getAttribute($this->primaryKey));
+        return $query;
     }
     public function newCollection(array $models = [])
     {
@@ -151,13 +255,12 @@ class Model implements  \JsonSerializable
 
     public function toArray()
     {
-        return [123];
         return array_merge($this->attributesToArray(), $this->relationsToArray());
     }
     public static function all($columns = ['*'])
     {
         $model = static::instance();
-        return (new Collection(((new Query)->setModel($model)->setColumns($columns)->all())))->hydrate(static::class);
+        return (new Collection((static::query()->setColumns($columns)->all())))->hydrate(static::class);
     }
     public static function hydrate($items)
     {
@@ -166,21 +269,27 @@ class Model implements  \JsonSerializable
         } elseif(is_array($items)) {
             return (new Collection($items))->hydrate(static::class);
         }
+		}
+		public static function hydrateQuery($query, $params = [])
+		{
+			return (new Collection(static::instance()->getConnection()->get($query, $params)))->hydrate(static::class);
+//        return static::instance()->connection->get($query, $params);
     }
-    public static function hydrateQuery($query, $params = [])
+#    public static function query3($query, $params = [])
+#    {
+#			return static::hydrateQuery($query, $params);
+#		}
+		public static function query()
     {
-        return static::instance()->connection->get($query, $params);
-    }
-
-    public function fireModelEvent($name, $value = null)
+        return (new static)->newQuery();
+		}
+		public function newQuery()
     {
-        if ($value === null) {
-            if (isset($this->fireEvents[$name])) {
-                return $this->fireEvents[$name];
-            }
-            return null;
-        }
-        $this->fireEvents[$name] = $value;
+        return $this->registerGlobalScopes($this->newQueryWithoutScopes());
+		}
+		public function newQueryWithoutScopes()
+		{
+			return (new Builder)->setModel(static::instance());
     }
     /**
      * Perform any actions required before the model boots.
@@ -195,6 +304,26 @@ class Model implements  \JsonSerializable
     {
         static::bootTraits();
     }
+    protected static function booted()
+    {
+        //
+		}
+		public static function clearBootedModels()
+    {
+        static::$booted = [];
+
+        static::$globalScopes = [];
+		}
+		public function hasNamedScope($scope)
+    {
+        return method_exists($this, 'scope'.ucfirst($scope));
+    }
+
+    public function callNamedScope($scope, array $parameters = [])
+    {
+        return $this->{'scope'.ucfirst($scope)}(...$parameters);
+    }
+
 
     /**
      * Boot all of the bootable traits on the model.
@@ -218,21 +347,62 @@ class Model implements  \JsonSerializable
         $booted = [];
 
         static::$traitInitializers[$class] = [];
-    }
+		}
     protected function initializeTraits()
     {
         foreach (static::$traitInitializers[static::class] as $method) {
             $this->{$method}();
         }
-    }
-    public function __get($key)
+		}
+
+
+		public function registerGlobalScopes($builder)
     {
-        return $this->getAttribute($key);
+			foreach ($this->getGlobalScopes() as $identifier => $scope) {
+            $builder->withGlobalScope($identifier, $scope);
+        }
+
+        return $builder;
     }
 
-    public function __set($key, $value)
+    public function getKeyType()
     {
-        $this->setAttribute($key, $value);
+        return $this->keyType;
+    }
+
+    /**
+     * Set the data type for the primary key.
+     *
+     * @param  string  $type
+     * @return $this
+     */
+    public function setKeyType($type)
+    {
+        $this->keyType = $type;
+
+        return $this;
+    }
+
+
+
+		public function __isset($key)
+		{
+			return isset($this->attributes[$key]);
+		}
+    public function __get($key)
+		{
+        return $this->getAttribute($key);
+    }
+    public function __set($key, $value)
+		{
+			$this->setAttribute($key, $value);
+			if ($this->isFillable($key)) {
+	      $this->setChange($key, $value);
+			}
+		}
+		public static function __callStatic($method, $parameters)
+    {
+        return (new static)->$method(...$parameters);
     }
     public function __toString() {
         return "No es posible convertir a objeto: " . static::class;

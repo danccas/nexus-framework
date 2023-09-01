@@ -1,10 +1,16 @@
 <?php
 namespace Core;
 
+use Core\HeaderBag;
+
 class Request {
 
     private static $instance;
-    private $attrs = [];
+		private $attrs = [];
+		public $headers = null;
+		private $_inputs = [];
+		private $_method = null;
+		private $_ajax = false;
 
     public static function instance()
     {
@@ -17,31 +23,68 @@ class Request {
     {
         if (null === static::$instance) {
             static::$instance = $this;
-        }
-    }
-    public function headers() {
+				}
+				$this->capture();
+		}
+		public function capture() {
+			$this->_ajax   = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
+			$this->_method = strtoupper($_SERVER['REQUEST_METHOD']);
+			if(!empty($_REQUEST['_method'])) {
+				$method_static = strtoupper($_REQUEST['_method']);
+				if(in_array($method_static, ['PUT'])) {
+					if($this->_method != $method_static) {
+						$this->_method = $method_static;
+					}
+				}
+			}
+			$this->headers = new HeaderBag(getallheaders());
+			$with = session()->read('withInputs');
+			session()->delete('withInputs');
+			$this->_inputs = !empty($_REQUEST) ? $_REQUEST : [];
+			if(in_array($this->_method, ['PUT']) && empty($_POST)) {
+				parse_str(file_get_contents('php://input'), $_PUT);
+				$this->_inputs = $_PUT;
+			}
+
+			if(!empty($with)) {
+				$with = json_decode($with, true);
+				if(!empty($with)) {
+					$this->_inputs = array_merge($this->_inputs, $with);
+				}
+			}
+		}
+		public function link() {
+			return $_SERVER['REQUEST_URI'];
+		}
+		public function ajax() {
+			return $this->_ajax;
+		}
+    public function headers2() {
         return getallheaders();
     }
     public function header($key) {
-        $hs = $this->headers();
+        $hs = $this->headers2();
         return isset($hs[$key]) ? $hs[$key] : null;
     }
     public function raw() {
         $raw = file_get_contents('php://input');
         return $raw;
-    }
+		}
     public function json() {
         $raw = $this->raw();
         return json_decode($raw);
-    }
+		}
+		public function inputs() {
+			return $this->_inputs;
+		}
     public function input($name = null, $coalesce = null) {
-        if(is_null($name)) {
-            return $_REQUEST;
-        }
-        return $_REQUEST[$name] ?? $coalesce;
+			if(is_null($name)) {
+				return $this->inputs();
+      }
+      return $this->_inputs[$name] ?? $coalesce;
     }
     public function method() {
-        return $_SERVER['REQUEST_METHOD'];
+			return $this->_method;
     }
     public function by($zone) {
         return false;

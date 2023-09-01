@@ -2,6 +2,7 @@
 namespace Core;
 
 class Terminal {
+
     protected $protocol;
     protected $host;
     protected $port;
@@ -9,28 +10,31 @@ class Terminal {
     protected $password;
 		protected $connect;
 		protected $auths = [];
-        private $result;
+    private $result;
 
     function __construct($protocol, $host, $port = 22) {
         $this->protocol = $protocol;
         $this->host     = $host;
         $this->port     = $port;
     }
+
     function connect($username, $password = null) {
         $this->username = $username;
         $this->password = $password;
         if(!function_exists('ssh2_connect')) {
             exit('Debe instalar php-ssh2');
         }
+
         $this->connect = \ssh2_connect($this->host, $this->port);
         if(!empty($this->password)) {
             \ssh2_auth_password($this->connect, $this->username, $this->password);
 				} else {
 					\ssh2_auth_pubkey_file($this->connect, $this->username, '~/.ssh/id_rsa.pub', '~/.ssh/id_rsa');
-#						\ssh2_auth_agent($this->connect, $this->username);
+#					\ssh2_auth_agent($this->connect, $this->username);
 #					$this->auths = \ssh2_auth_none($this->connect, $this->username);
         }
     }
+
     function exec($cmd) {
         $stream = \ssh2_exec($this->connect, $cmd);
         \stream_set_blocking($stream, true);

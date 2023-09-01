@@ -1,4 +1,5 @@
 <?php
+
 namespace Core;
 
 use \TCPDF;
@@ -8,46 +9,31 @@ use \TCPDF;
 class Pdf extends TCPDF {
   public $autor      = null;
   public $showHeader = false;
-  public $empresa    = null;
+	public $empresa    = null;
+	public $code_header = null;
+  public $code_footer = null;
+
   function __construct() {
       parent::__construct();
   }
-  public function Header() {
-    $this->SetY(5);
-    $html  = '<table>';
-      $html .= '<tr>';
-        $html .= '<td style="width:75%;color:#676666;"><br /><br />';
-          $html .= '<span style="font-size:15px;"><span style="font-weight:bold;">SRT</span></span><br>';
-          $html .= '<span style="font-size:13px;">Transmisiones en tiempo real</span><br>';
-          $html .= '</td>';
-          $html .= '<td><img src="https://srt.sutran.gob.pe/assets2/img/logo-srt.jpg" style="width:150px;"/></td>';
-      $html .= '</tr>';
-    $html .= '</table>';
-    $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $html, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
+	public function header() {
+    $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $this->code_header, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
+		$this->SetY(5);
+		$img_file = 'https://www.creainter.com.pe/assets/images/logo.png';#/var/www/html/simaci.com.pe/public/assets2/img/logo-light.png';
+		$this->SetAlpha(0.1);
+		$this->Image($img_file, 50, 85, 200, 0);
   }
 
   public function Footer() {
-    global $USUARIO;
     $this->SetY(-20);
-    $fecha   = 'Generado a las ' . fecha('now', true);
-    $pagina  = 'Página ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages();
-    $html = '<hr><br>';
-    $html .= '<table style="width:100%;">';
-      $html .= '<tr>';
-        $html .= '<td style="width:50%">';
-          $html .= $fecha;
-        $html .= '</td>';
-        $html .= '<td style="text-align:right">';
-          $html .= $pagina;
-        $html .= '</td>';
-      $html .= '</tr>';
-    $html .= '</table>';
-    $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $html, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
+    $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $this->code_footer, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
   }
 }
 
 class PDFily {
-  private $_instance = null;
+	private $_instance = null;
+	private $is_manual = false;
+	public $_blade = null;
 
   function __construct($empresa = null) {
     $this->_instance = new Pdf(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -70,30 +56,46 @@ class PDFily {
     }
     public function setAutor($nombre) {
       $this->_instance->autor = $nombre;
-    }
-    public function addPage($html2, $tipo = null) {
-      $html = "<style>";
-      $html .= "th { border: 1px solid #c3c3c3; padding: 5px; text-align:center; font-weight: bold; }";
-      $html .= "table { border: 1px solid #c3c3c3; }";
-      $html .= "td { padding: 5px; }";
-      $html .= "</style>" . $html2;
-      unset($html2);
-      $html = str_replace('<tbody>', '', $html);
-      $html = str_replace('</tbody>', '', $html);
-      $html = str_replace('<thead>', '', $html);
-      $html = str_replace('</thead>', '', $html);
-      if(is_null($tipo)) {
+		}
+		public function view($theme, $params = [], $orientacion = null) {
+			$this->is_manual = true;
+			$this->_blade = (new Blade($theme))->append($params);
+			return $this->addPage($_blade, $orientacion);
+		}
+    public function addPage($html, $tipo = null) {
+			$html2 = '';
+			$part = explode('<header>', $html);
+			$html2 .= $part[0];
+			$part = explode('</header>', $part[1]);
+			$html2 .= $part[1];
+			$this->_instance->code_header = $part[0];
+
+			$html = '';
+			$part = explode('<footer>', $html2);
+			$html .= $part[0];
+			$part = explode('</footer>', $part[1]);
+      $html .= $part[1];
+			$this->_instance->code_footer = $part[0];
+			unset($html2);
+			if(is_null($tipo)) {
         $this->_instance->AddPage();
       } else {
         $this->_instance->AddPage($tipo, 'A4');
       }
       $this->_instance->writeHTMLCell($w=0, $h=0, $x='', $y=20, $html, $border=0, $ln=1, $fill=0, $reseth=true, $align='L', $autopadding = true);
     }
-    public function save($name, $tipo = 'I') {
+		public function save($name, $tipo = 'I') {
+			if($this->_blade !== null) {
+				$this->_blade->append(['pdf' => $this->_instance]);
+				if(!$is_manual) {
+					$this->addPage($this->_blade, $this->_blade->orientacion);
+				}
+			}
       $name = strpos($name, '.pdf') === false ? $name . '.pdf' : $name;
       return $this->_instance->Output($name, $tipo);
     }
     public function forceDownload($name) {
+			  header('Content-Type: application/pdf');
         $this->save($name, 'D');
         exit();
     }

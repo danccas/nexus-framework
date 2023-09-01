@@ -29,7 +29,7 @@ trait GuardsAttributes
      *
      * @var array
      */
-    protected static $guardableColumns = [];
+		protected static $guardableColumns = [];
 
     /**
      * Get the fillable attributes for the model.

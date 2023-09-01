@@ -66,8 +66,8 @@ class Identify extends Model
   }
   static function close(&$usuario = null)
   {
-    $ce = Identify::instance();
-    $ce->session->delete(self::$idsession);
+    //$ce = Identify::instance();
+    Session::instance()->delete(self::$idsession);
     unset($usuario);
   }
   function __get($key)

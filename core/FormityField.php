@@ -27,7 +27,7 @@ class FormityField
   private $is_valid   = null;
   private $callback   = null;
   private $depend = array();
-  public $error      = array();
+  public $_error      = array();
   private $html       = '';
   public $childrang = null;
   public $childrangchange = true;
@@ -85,8 +85,8 @@ class FormityField
       #      $this->childstruct->parentForm = $form;
       $type = 'form';
       $cr = $analyze;
-      Route::addJS('/js/formity.add.js', 'formity.add');
-      Route::addCSS('/css/formity.add.css');
+      blade()->asset('/js/formity.add.js', 'formity.add');
+      blade()->asset('/css/formity.add.css');
     } else {
       if (strpos($type, $div) === false) {
         $type .= $div;
@@ -105,31 +105,31 @@ class FormityField
       #      $this->type = 'text';
       #      $this->extra = 'autocomplete';
 
-    } elseif ($this->extra == 'autocomplete') {
-      Route::addJS('/js/jquery-ui.min.js', 'jquery-ui');
-      Route::addCSS('/css/jquery-ui.min.css');
+		} elseif ($this->extra == 'autocomplete') {
+      blade()->asset('/assets/js/jquery-ui.min.js');
+      blade()->asset('/assets/css/jquery-ui.min.css');
     } elseif ($this->type == 'panel') {
-      Route::addJS('/js/formity.panel.js', 'formity.panel');
+      blade()->asset('/js/formity.panel.js', 'formity.panel');
     } elseif ($this->type == 'tree') {
-      Route::addJS('/js/formity.tree.js', 'formity.tree');
-      Route::addCSS('/css/formity.tree.css');
+      blade()->asset('/js/formity.tree.js', 'formity.tree');
+      blade()->asset('/css/formity.tree.css');
       require_once(ABS_LIBRERIAS . 'formity.tree.php');
     } elseif ($this->type == 'word') {
-      Route::addJS('/js/trumbowyg.min.js');
-      Route::addJS('/js/trumbowyg.table.js');
+      blade()->asset('/js/trumbowyg.min.js');
+      blade()->asset('/js/trumbowyg.table.js');
       #Route::JS('/js/trumbowyg.pasteembed.js');
-      Route::addCSS('/css/trumbowyg.min.css');
-      Route::addCSS('/css/trumbowyg.table.css');
+      blade()->asset('/css/trumbowyg.min.css');
+      blade()->asset('/css/trumbowyg.table.css');
     } elseif ($this->type == 'textarea' && $this->extra == 'tags') {
-      Route::addJS('/js/jquery.tagsinput.js');
-      Route::addCSS('/css/jquery.tagsinput.css');
+      blade()->asset('/js/jquery.tagsinput.js');
+      blade()->asset('/css/jquery.tagsinput.css');
     }
     if (!empty($cr)) {
       if (is_numeric($cr)) {
         $cr = $cr . '-' . $cr . ':' . $cr;
         $this->childrangchange = false;
       } else {
-        Route::addJS('/js/formity.add.js', 'formity.add');
+        blade()->asset('/js/formity.add.js', 'formity.add');
       }
       $pcr = explode(':', $cr);
       $this->childrang = $pcr[0];
@@ -265,7 +265,7 @@ class FormityField
   }
   function clear()
   {
-    $this->error = null;
+    $this->_error = null;
     $this->seteo = false;
     $this->value = null;
   }
@@ -324,7 +324,8 @@ class FormityField
     $value = is_array($value) ? $value : trim((string)$value);
     if (is_null($value) || $value == '' ||  (is_array($value) && count($value) == 0)) {
       $value = null;
-    }
+		}
+//		echo "vv: " . $value . '/' . $this->name;
     $rp = false;
     if ($force || $this->validarValue($value)) {
       if ($main_form->is_ajax) {
@@ -336,9 +337,9 @@ class FormityField
       $this->value = $value;
       $rp = true;
     } else {
-      if (!empty($this->error)) {
-        foreach ($this->error as $e) {
-          $this->mform->error[] = $e;
+      if (!empty($this->_error)) {
+        foreach ($this->_error as $e) {
+          $this->mform->_error[] = $e;
         }
       }
     }
@@ -550,74 +551,74 @@ class FormityField
   }
   function validarValue($value)
   {
-    $this->error = array();
+    $this->_error = array();
     if (!empty($this->childstruct) &&  !empty($this->required) && empty($this->children)) {
-      $this->error[] = $this->name . ' es requerido.';
+      $this->_error[] = $this->name . ' es requerido.';
       goto saltar;
     }
     if ($this->type == 'input' && $this->extra == 'file') {
       if (!empty($this->required)) {
         if (empty($value['size']) || !empty($value['error'])) {
           if (!(!empty($this->value) && !$this->seteo)) {
-            $this->error[] = $this->name . ' es inválido. (#1)';
+            $this->_error[] = $this->name . ' es inválido. (#1)';
           }
         }
       } elseif (!empty($value)) {
         if (empty($value['size'])) {
-          $this->error[] = $this->name . ' es un fichero vacío';
+          $this->_error[] = $this->name . ' es un fichero vacío';
         } elseif (!empty($value['error'])) {
-          $this->error[] = $this->name . ': ' . $value['error'];
+          $this->_error[] = $this->name . ': ' . $value['error'];
         }
       }
     } elseif ($this->type == 'input' && $this->extra == 'files') {
       if (!empty($this->required)) {
         foreach ($value as $k => $v) {
           if (empty($v['size']) || !empty($v['error'])) {
-            $this->error[] = $this->name . '#' . ($k + 1) . ' es inválido. (#1)';
+            $this->_error[] = $this->name . '#' . ($k + 1) . ' es inválido. (#1)';
           }
         }
       } elseif (!empty($value)) {
         foreach ($value as $k => $v) {
           if (empty($v['size'])) {
-            $this->error[] = $this->name . '#' . ($k + 1) . ' es un fichero vacío';
+            $this->_error[] = $this->name . '#' . ($k + 1) . ' es un fichero vacío';
           } elseif (!empty($v['error'])) {
-            $this->error[] = $this->name . '#' . ($k + 1) . ': ' . $v['error'];
+            $this->_error[] = $this->name . '#' . ($k + 1) . ': ' . $v['error'];
           }
         }
       }
     } elseif ((is_null($value) || $value == '') && !empty($this->required)) {
-      $this->error[] = $this->name . ' es requerido.';
+      $this->_error[] = $this->name . ' es requerido. (v: ' . $value .')';
     }
     if ($this->type == 'input' && $this->extra == 'date') {
       if (!empty($value) || $this->required) {
         if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $value)) { //YYYY-MM-DD
           /*if(!(strtotime($value) > 0)) {
-            $this->error[] = 'Fecha Inválido. Debe ser YYYY-MM-DD, Ej. ' . date('Y-m-d');
+            $this->_error[] = 'Fecha Inválido. Debe ser YYYY-MM-DD, Ej. ' . date('Y-m-d');
         }*/
         } else {
-          $this->error[] = 'Fecha con formato Inválido. Debe ser YYYY-MM-DD, Ej. ' . date('Y-m-d');
+          $this->_error[] = 'Fecha con formato Inválido. Debe ser YYYY-MM-DD, Ej. ' . date('Y-m-d');
         }
       }
     } elseif ($this->type == 'input' && $this->extra == 'text') {
       if (!is_null($value) && $value != '') {
         if (strlen($value) > $this->length_max) {
-          $this->error[] = 'Se ha excedido el límite de caracteres (' . strlen($value) . '/' . $this->length_max . ') ingresados en ' . $this->name;
+          $this->_error[] = 'Se ha excedido el límite de caracteres (' . strlen($value) . '/' . $this->length_max . ') ingresados en ' . $this->name;
         }
         if (!is_null($this->regex)) {
           if (!preg_match("/^" . $this->regex . "$/", $value)) {
-            $this->error[] = 'El campo ' . $this->name . ' no cumple el formato requerido';
+            $this->_error[] = 'El campo ' . $this->name . ' no cumple el formato requerido';
           }
         }
       }
       if (!empty($this->required) || (empty($this->required) && (!is_null($value) || $value != ''))) {
         if (strlen($value) < $this->length_min) {
-          $this->error[] = 'El mínimo de caracteres ingresados en ' . $this->name . ' debe ser ' . $this->length_min;
+          $this->_error[] = 'El mínimo de caracteres ingresados en ' . $this->name . ' debe ser ' . $this->length_min;
         }
       }
     } elseif ($this->type == 'input' && $this->extra == 'email') {
       if (!empty($this->required) || !is_null($value)) {
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-          $this->error[] = $this->name . ' es inválido. (#2)';
+          $this->_error[] = $this->name . ' es inválido. (#2)';
         }
       }
     } elseif ($this->type == 'select') {
@@ -629,7 +630,7 @@ class FormityField
           }, ARRAY_FILTER_USE_BOTH);
           if (!empty($ops) && (!empty($this->required) || !is_null($value))) {
             if (!isset($ops[$value])) {
-              $this->error[] = $this->name . ' es inválido.(#3)';
+              $this->_error[] = $this->name . ' es inválido.(#3)';
             }
           }
         }
@@ -638,14 +639,14 @@ class FormityField
     if (!is_null($this->callback) && is_callable($this->callback)) {
       $rp = $this->callback($value, $form['fields'], $error);
       if (empty($rp)) {
-        $this->error[] = $error;
+        $this->_error[] = $error;
       }
     }
     saltar:
-    if (!empty($this->error)) {
+    if (!empty($this->_error)) {
       $this->is_valid = true;
     }
-    return empty($this->error);
+    return empty($this->_error);
   }
   function attr($key, $value) {
     $this->__attrs[$key] = $value;
@@ -753,8 +754,9 @@ class FormityField
       } else {
         $h .= '<textarea name="' . $keyw . '" id="ip_' . $this->getNameRequest() . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '">' . htmlentities($this->value) . '</textarea>';
       }
-      $h .= "<script> requireJS('jquery-ui', function() { $('#ip_" . $this->getNameRequest() . "').autocomplete({ source: function (request, response) { \n";
-      $h .= "$.ajax({ type: \"POST\", url: \"" . Route::uri(null, null, null, 'aip=' . $this->getNameRequest()) . "&term=\" + request.term,";
+			$h .= "<script> require('/assets/js/jquery-ui.min.js', function() { console.log('CARGADO DE AUTOCOMPLETE'); $('#ip_" . $this->getNameRequest() . "').autocomplete({ source: function (request, response) { \n";
+			$uri = $this->mform->url->query('aip', $this->getNameRequest())->link();
+      $h .= "$.ajax({ type: \"POST\", url: \"" . $uri . "&term=\" + request.term,";
       $h .= "data: new FormData($(\"[data-id='" . $this->mform->id . "']\")[0]), contentType: false, processData: false, success: response, dataType: 'json' }); }, minLength: 2, ";
       $h .= "select: function( event, ui ) {\n";
       $h .= "event.preventDefault();\n";
@@ -872,7 +874,7 @@ class FormityField
 
       $h .= <<<EOF
 <script>
-requireJS('formity.panel', function() {
+require('formity.panel', function() {
   $('#ft_panel_{$keyw}').on('click', ft_panel_refresh);
   $('#ft_panel_{$keyw}').on('click', '.buttons', function(e) {
     e.preventDefault();
@@ -928,7 +930,7 @@ EOF;
       if (!is_null($this->length_max)) {
         $extra .= 'max: ' . $this->length_max . ',';
       }
-      $linkOp = Route::uri(null, DOMINIO_ACTUAL, SUBDOMINIO_ACTUAL, '_ft=' . $this->getNameRequest());
+			$linkOp = $this->mform->url->query('_ft', $this->getNameRequest())->link();
       $h .= <<<EOF
         <script> FormityTree($("#{$u}"), {url: '{$linkOp}', value: 'val_{$u}', {$extra} }).init(); </script>
 EOF;
@@ -1001,7 +1003,7 @@ EOF;
       $h .= '</div>';
 
       if ($this->childrangchange) {
-        $h .= '<script>requireJS(\'formity.add\', function() { ElementsAdd({ clone: "#clonar_' . $keid . $this->getNameRequest() . '", contain: "#contenedorMore_' . $keid . $this->getNameRequest() . '", plus: "#addMore_' . $keid . $this->getNameRequest() . '", min: ' . $this->length_min . ',max: ' . $this->length_max . ', join: ".joinMore_' . $this->getNameRequest() . '" }).init(); });</script>';
+        $h .= '<script>require(\'formity.add\', function() { ElementsAdd({ clone: "#clonar_' . $keid . $this->getNameRequest() . '", contain: "#contenedorMore_' . $keid . $this->getNameRequest() . '", plus: "#addMore_' . $keid . $this->getNameRequest() . '", min: ' . $this->length_min . ',max: ' . $this->length_max . ', join: ".joinMore_' . $this->getNameRequest() . '" }).init(); });</script>';
       }
 
       ###############################
@@ -1012,7 +1014,7 @@ EOF;
     if (!is_null($this->icon)) {
       $h .= '<div class="input-icon"><i data-feather="' . $this->icon . '"></i></div>';
     }
-    $h .= '<p class="text-warning mt-2" data-fnn-message>' . implode(',', $this->error) . '</p>';
+    $h .= '<p class="text-warning mt-2" data-fnn-message>' . implode(',', $this->_error) . '</p>';
     return $h;
   }
   function __toString()

@@ -58,7 +58,7 @@ class Session
         }
       }
     }
-    return false;
+    return null;
   }
 
   public static function r($key, $child = false)

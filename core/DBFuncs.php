@@ -4,6 +4,7 @@ namespace Core;
 
 use Core\Concerns\Collection;
 use Core\DBHelpers;
+use Core\Database\Raw;
 
 class DBFuncs
 {
@@ -28,7 +29,7 @@ class DBFuncs
         }
         array_walk($fields, function (&$value, $field) {
             $n['duple'] = strpos($field, '*') === 0;
-            $n['equal'] = strpos($field, '=') === strlen($field) - 1;
+            $n['equal'] = strpos($field, '=') === strlen($field) - 1 || $value instanceof Raw;
             $n['field'] = str_replace('*', '', str_replace('=', '', $field));
             $n['id']    = str_replace('_', '', $n['field']);
             $n['value'] = is_null($value) ? null : $value;

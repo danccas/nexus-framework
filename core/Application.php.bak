@@ -4,7 +4,6 @@ namespace Core;
 
 use Core\Kernel;
 use Core\Route;
-use Dotenv\Dotenv;
 
 class Application
 {
@@ -65,8 +64,6 @@ class Application
     public function registerConfiguresAvailable()
     {
         $this->can_register_configs = true;
-        $dotenv = Dotenv::createUnsafeImmutable($this->basePath);
-        $dotenv->safeLoad();
         foreach (glob($this->basePath . 'config/*.php') as $filename) {
             require_once $filename;
         }
