@@ -1,5 +1,9 @@
 <?php
 use App\Auth;
+function csrf_token() {
+  return null;
+}
+
 function is_type($val, $type) {
 	if($type == 'int') {
 		return is_numeric($val);

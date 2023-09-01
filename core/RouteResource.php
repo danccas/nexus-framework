@@ -1,9 +1,11 @@
 <?php
+
 namespace Core;
 
 use Core\Route;
 
-class RouteResource {
+class RouteResource
+{
     protected $regex;
     protected $params = [];
     protected $prefix = null;
@@ -25,9 +27,10 @@ class RouteResource {
         );
         $this->name($regex);
     }
-    function name($name) {
-        foreach($this->routes as $k => $r) {
-            if(in_array($k, ['tablefy'])) {
+    function name($name)
+    {
+        foreach ($this->routes as $k => $r) {
+            if (in_array($k, ['tablefy'])) {
                 $r->name($name . '.' . $k)->permission($name . '.index');
             } else {
                 $r->name($name . '.' . $k);
@@ -36,19 +39,26 @@ class RouteResource {
         return $this;
     }
 
-		function middleware($midd) {
-        foreach($this->routes as $k => $r) {
+    function middleware($midd)
+    {
+        foreach ($this->routes as $k => $r) {
             $r->middleware($midd);
         }
         return $this;
     }
 
-		function parameter($name) {
-			$this->name($name);
+    function parameter($name)
+    {
+        $this->name($name);
         $reem = ':' . $this->regex;
-        foreach($this->routes as $k => $r) {
+        foreach ($this->routes as $k => $r) {
             $r->setRegex(str_replace($reem, ':' . $name, $r->getRegex()));
         }
         return $this;
+    }
+    function parameters($list) {
+        foreach($list as $key => $val) {
+            $this->parameter($val);
+        }
     }
 }

@@ -218,6 +218,9 @@ class Route
     public function isControllerValid()
     {
         $this->controller = explode('@', $this->callback);
+        if(!class_exists($this->controller[0])) {
+            $this->controller[0] = "App\\Http\\Controllers\\" . $this->controller[0];
+        }
         return method_exists($this->controller[0], $this->controller[1]);
     }
     private function reflectionController()
@@ -440,6 +443,13 @@ class Route
     public static function any($a1, $a2, $a3 = null)
     {
         return static::__request('any', $a1, $a2, $a3);
+    }
+    public static function match($a1, $a2, $a3 = null)
+    {
+      foreach($a1 as $k) {
+        static::__request($k, $a1, $a2, $a3);
+      }
+      return null;
     }
     public static function post($a1, $a2, $a3 = null)
     {

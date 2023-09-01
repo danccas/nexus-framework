@@ -6,22 +6,22 @@ use Exception;
 
 class Blade
 {
-	private $id;
-	private $_name;
+    private $id;
+    private $_name;
     private $cache;
     protected $file;
     protected $fileCached;
     protected $inputs = [];
     protected $heredados = [];
-    
+
     public static $indexes = 0;
     private static $instance;
     public $partes = [];
     protected $sections = [];
     protected $html_asset = [];
     protected $html_prepend = [];
-		protected $html_after   = [];
-		protected $is_load = false;
+    protected $html_after   = [];
+    protected $is_load = false;
 
     public static function instance($view_name = null)
     {
@@ -31,122 +31,138 @@ class Blade
         return static::$instance;
     }
     public function __construct($file = null, $cache = true)
-		{
-			if(!is_null($file)) {
-				$this->load($file, $cache);
-			}
-		}
-		public function name() {
-			return $this->_name;
-		}
-		public function isLoad() {
-			return $this->is_load;
-		}
-		public function asset($file, $name = null) {
-			if(is_null($name)) {
-				$name = $file;
-			}
-			if(isset($this->html_asset[$name])) {
-				return false;
-			}
-			$this->html_asset[$name] = $file;
-			return $this;
-		}
-		public function load($file, $cache = true) {
-			$this->is_load = true;
-			$this->_name = $file;
-			$path = static::path($file);
-      $this->id = ++static::$indexes;
-      $this->cache = $cache;
-      $this->file = $path['file'];
-      $this->fileCached = $path['cache'];
+    {
+        if (!is_null($file)) {
+            $this->load($file, $cache);
+        }
+    }
+    public function name()
+    {
+        return $this->_name;
+    }
+    public function isLoad()
+    {
+        return $this->is_load;
+    }
+    public function asset($file, $name = null)
+    {
+        if (is_null($name)) {
+            $name = $file;
+        }
+        if (isset($this->html_asset[$name])) {
+            return false;
+        }
+        $this->html_asset[$name] = $file;
+        return $this;
+    }
+    public function load($file, $cache = true)
+    {
+        $this->is_load = true;
+        $this->_name = $file;
+        $path = static::path($file);
+        $this->id = ++static::$indexes;
+        $this->cache = $cache;
+        $this->file = $path['file'];
+        $this->fileCached = $path['cache'];
 
-      $modificado = cache('views')->item($file);
-      if(empty($modificado) || $modificado != filemtime($path['file']) || true) {
-          @unlink($this->fileCached);
-          if($cache) {
-              cache('views')->item($file, filemtime($path['file']));
-          }
-      }
-      if (null === static::$instance) {
-          static::$instance = $this;
-      }
-      if($this->getId() > 1) {
-        //echo "Error = No se puede usar view() en views";
-       // exit;
-			}
-			return $this;
-		}
-    public function getId() {
+        $modificado = cache('views')->item($file);
+        if (empty($modificado) || $modificado != filemtime($path['file']) || true) {
+            @unlink($this->fileCached);
+            if ($cache) {
+                cache('views')->item($file, filemtime($path['file']));
+            }
+        }
+        if (null === static::$instance) {
+            static::$instance = $this;
+        }
+        if ($this->getId() > 1) {
+            //echo "Error = No se puede usar view() en views";
+            // exit;
+        }
+        return $this;
+    }
+    public function getId()
+    {
         return $this->id;
     }
-    public static function partView($name, $callback) {
-        if(!isset(static::instance()->partes[$name])) {
+    public static function partView($name, $callback)
+    {
+        if (!isset(static::instance()->partes[$name])) {
             static::instance()->partes[$name] = [];
         }
         static::instance()->partes[$name][] = $callback;
     }
-    public static function partViewExists($name) {
+    public static function partViewExists($name)
+    {
         return isset(static::instance()->partes[$name]);
     }
-    public static function partViewCall($name) {
+    public static function partViewCall($name)
+    {
         $rp = '';
-				if(!isset(static::instance()->partes[$name])) {
-					return '';
+        if (!isset(static::instance()->partes[$name])) {
+            return '';
             return '<!-- no ' . $name . " -->\n";
         }
-        foreach(static::instance()->partes[$name] as $r) {
+        foreach (static::instance()->partes[$name] as $r) {
             $imports = static::instance()->getHeredados();
             $rp .= ($r)($imports);
         }
         return $rp;
     }
-		public static function path($name) {
+    public static function path($name)
+    {
         $name = str_replace('.', '/', $name);
         $file = app()->getPath() . 'resources/views/' . $name . '.php';
-        $cache = app()->getPath() . '/cache/views/' . md5($file) . '.php';
-        if(!file_exists($file)) {
-            echo "File not exists = " . $file;
-            exit();
+        if (!file_exists($file)) {
+            $file = app()->getPath() . 'resources/views/' . $name . '.blade.php';
+            if (!file_exists($file)) {
+                echo "File not exists = " . $file;
+                exit();
+            }
         }
+        $cache = app()->getPath() . '/cache/views/' . md5($file) . '.php';
         return [
             'file'  => $file,
             'cache' => $cache,
         ];
     }
-    
-    public function setHeredados($data) {
+
+    public function setHeredados($data)
+    {
         $this->heredados = $data ?? [];
         return $this;
     }
-    public function getHeredados() {
+    public function getHeredados()
+    {
         return $this->heredados;
     }
-    
+
     public function append($inputs)
-		{
-			if(!empty($inputs)) {
-				$this->inputs = array_merge($this->inputs, $inputs);
-			}
-      return $this;
+    {
+        if (!empty($inputs)) {
+            $this->inputs = array_merge($this->inputs, $inputs);
+        }
+        return $this;
     }
-    private static function preCompileBasic($html) {
-        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[^\)]+(\)?)))?\)/", function($res) {
-            if($res['type'] == 'include') {
+    private static function preCompileBasic($html)
+    {
+        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[^\)]+(\)?)))?\)/", function ($res) {
+            if ($res['type'] == 'include') {
                 $th = (new Blade($res['name'], false));
                 $rp = '';
-                if(!empty($res['params'])) {
+                if (!empty($res['params'])) {
                     $rp = "<!--- vars:" . $res['params'] . " --->\n<?php extract(" . $res['params'] . "); ?>";
                 }
                 $rp .= $th->precompile();
                 return $rp;
-            } elseif($res['type'] == 'tablefy') {
+            } elseif ($res['type'] == 'tablefy') {
                 //dd( serialize($res['params']));
                 //exit();
                 $tuq = 't' . uniqid();
-if(false){                static::instance()->html_prepend[] = "<?php \Core\Blade::partView('styles', function(\$params) {?>"
-										. '<link href="/assets/css/tablefy.css" rel="stylesheet" type="text/css" /><?php }); ?>';
-}
+                if (false) {
+                    static::instance()->html_prepend[] = "<?php \Core\Blade::partView('styles', function(\$params) {?>"
+                        . '<link href="/assets/css/tablefy.css" rel="stylesheet" type="text/css" /><?php }); ?>';
+                }
 
                 static::instance()->html_prepend[] = "<?php \Core\Blade::partView('scripts', function(\$params) {?>"
                     . '<script>'
@@ -171,24 +187,16 @@ if(false){                static::instance()->html_prepend[] = "<?php \Core\Blad
             }
         }, $html);
 
-        $html = preg_replace_callback('/@extends\(\'(?<name>[^\']+)\'\)\s*/', function($res) {
+        $html = preg_replace_callback('/@extends\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
             static::instance()->html_after[] = (new Blade($res['name'], false))->precompile();
             return '';
         }, $html);
 
-				$html = preg_replace_callback('/@method\(\'(?<name>[^\']+)\'\)\s*/', function($res) {
+        $html = preg_replace_callback('/@method\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
             return "<input type=\"hidden\" name=\"_method\" value=\"" . $res['name'] . "\">\n<!-- METHOD: " . $res['name'] . "-->\n";
         }, $html);
 
-				$html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\,(\s*)[\'"](?<body>[\s\S]*?)(\s*)[\'"]\)/', function($res) {
-            static::instance()->sections[] = $res['name'];
-            static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $res['name'] . "', function(\$params) { extract(\$params); ?>"
-                . static::preCompileBasic($res['body'])
-                . '<?php }); ?>';
-            return '';
-				}, $html);
-
-        $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\)(\s*)(?<body>[\s\S]*?)(\s*)@endsection/', function($res) {
+        $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\,(\s*)[\'"](?<body>[\s\S]*?)(\s*)[\'"]\)/', function ($res) {
             static::instance()->sections[] = $res['name'];
             static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $res['name'] . "', function(\$params) { extract(\$params); ?>"
                 . static::preCompileBasic($res['body'])
@@ -196,96 +204,107 @@ if(false){                static::instance()->html_prepend[] = "<?php \Core\Blad
             return '';
         }, $html);
 
-        $html = preg_replace_callback('/@yield\(\'(?<name>[^\']+)\'\)\n*/', function($res){
+        $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\)(\s*)(?<body>[\s\S]*?)(\s*)@endsection/', function ($res) {
+            static::instance()->sections[] = $res['name'];
+            static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $res['name'] . "', function(\$params) { extract(\$params); ?>"
+                . static::preCompileBasic($res['body'])
+                . '<?php }); ?>';
+            return '';
+        }, $html);
+
+        $html = preg_replace_callback('/@yield\(\'(?<name>[^\']+)\'\)\n*/', function ($res) {
             return  "<?= \Core\Blade::partViewCall('" . $res['name'] . "'); ?>";
         }, $html);
 
-        $html = preg_replace_callback('/@foreach\s*\(\s*(?<for>[\s\$\w\\\:\(\)\_\>\-]+)\)\n/', function($res) {
+        $html = preg_replace_callback('/@foreach\s*\(\s*(?<for>[\s\$\w\\\:\(\)\_\>\-]+)\)\n/', function ($res) {
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback('/@if\s*\(\s*(?<for>[\!\=\s\$\w\\\:\(\)\_\>\-]+)\)\n/m', function($res) {
+        $html = preg_replace_callback('/@if\s*\(\s*(?<for>[\!\=\s\$\w\\\:\(\)\_\>\-]+)\)\n/m', function ($res) {
             return  "<?php if(" . $res['for'] . ") { ?>\n";
-				}, $html);
+        }, $html);
 
-				$html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[^\)]+)\)/', function($res) {
+        $html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[^\)]+)\)/', function ($res) {
             return  "<?php } elseif(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-				$html = preg_replace_callback('/@hasSection\(\'(?<name>[^\']+)\'\)/', function($res) {
+        $html = preg_replace_callback('/@hasSection\(\'(?<name>[^\']+)\'\)/', function ($res) {
             return  "<?php if(\Core\Blade::partViewExists('" . $res['name'] . "')) { ?>";
         }, $html);
 
-        $html = preg_replace_callback('/@end(foreach|if)/m', function($res) {
+        $html = preg_replace_callback('/@end(foreach|if)/m', function ($res) {
             return  "<?php } ?>";
         }, $html);
 
-        $html = preg_replace_callback('/@js\(\'(?<name>[^\']+)\'\)\s*/', function($res) {
+        $html = preg_replace_callback('/@js\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
             static::instance()->html_asset[] = $res['name'];
             return '';
         }, $html);
 
-        $html = preg_replace_callback('/@css\(\'(?<name>[^\']+)\'\)\s*/', function($res) {
+        $html = preg_replace_callback('/@css\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
             static::instance()->html_asset[] = $res['name'];
             return '';
         }, $html);
 
         return trim($html);
     }
-    public function precompile() {
+    public function precompile()
+    {
         $html = file_get_contents($this->file);
         $html = "\n<!---- pre: " . $this->file . "--->\n" . $html;
-        
+
         $html = static::preCompileBasic($html);
 
-        if($this->id === static::instance()->id) {
-            foreach(static::instance()->html_prepend as $p) {
+        if ($this->id === static::instance()->id) {
+            foreach (static::instance()->html_prepend as $p) {
                 $html = $p . $html;
             }
-            foreach(static::instance()->html_after as $p) {
+            foreach (static::instance()->html_after as $p) {
                 $html .= $p;
             }
-						foreach(static::instance()->html_asset as $name => $file) {
-							if(str_contains($file, '.js')) {
-								if(in_array('scripts', static::instance()->sections) || true) {
-                   $html = "<?php \Core\Blade::partView('scripts', function(\$params) { extract(\$params); ?>"
-										. $this->html_asset_js($file, $name)
-                    . '<?php }); ?>' . $html;
-								} else {
-									$html .= $this->html_asset_js($file, $name);
-								}
-							} else {
-                if(in_array('styles', static::instance()->sections) || true) {
-                   $html = "<?php \Core\Blade::partView('styles', function(\$params) { extract(\$params); ?>"
-                    . $this->html_asset_css($file, $name)
-                    . '<?php }); ?>' . $html;
+            foreach (static::instance()->html_asset as $name => $file) {
+                if (str_contains($file, '.js')) {
+                    if (in_array('scripts', static::instance()->sections) || true) {
+                        $html = "<?php \Core\Blade::partView('scripts', function(\$params) { extract(\$params); ?>"
+                            . $this->html_asset_js($file, $name)
+                            . '<?php }); ?>' . $html;
+                    } else {
+                        $html .= $this->html_asset_js($file, $name);
+                    }
                 } else {
-                  $html .= $this->html_asset_css($file, $name);
+                    if (in_array('styles', static::instance()->sections) || true) {
+                        $html = "<?php \Core\Blade::partView('styles', function(\$params) { extract(\$params); ?>"
+                            . $this->html_asset_css($file, $name)
+                            . '<?php }); ?>' . $html;
+                    } else {
+                        $html .= $this->html_asset_css($file, $name);
+                    }
                 }
-							}	
             }
         }
         $html = "\n<!--- theme: #" . $this->id . "-->\n" . $html . "\n<!--- end theme: #" . $this->id . "-->\n";
         return trim($html);
-		}
-		private function html_asset_css($file, $name) {
-			return '<link href="' . $file . '" rel="stylesheet" type="text/css" />';
-		}
-    private function html_asset_js($file, $name = null) {
-			return "<script>require('" . $file . "');</script>";
-		}
+    }
+    private function html_asset_css($file, $name)
+    {
+        return '<link href="' . $file . '" rel="stylesheet" type="text/css" />';
+    }
+    private function html_asset_js($file, $name = null)
+    {
+        return "<script>require('" . $file . "');</script>";
+    }
     public function compile()
     {
-				$html = $this->precompile();
-				$html = str_replace("{{--", "<!--", $html);
-        $html = str_replace("--}}", "-->", $html);				
+        $html = $this->precompile();
+        $html = str_replace("{{--", "<!--", $html);
+        $html = str_replace("--}}", "-->", $html);
         $html = str_replace('{{', '<?=', $html);
         $html = str_replace('}}', '?>', $html);
 
         $html = str_replace('@php', '<?php', $html);
-				$html = str_replace('@endphp', '?>', $html);
+        $html = str_replace('@endphp', '?>', $html);
         $html = str_replace('@else', '<?php } else { ?>', $html);
-				$html = str_replace('@endif', '<?php } ?>', $html);
+        $html = str_replace('@endif', '<?php } ?>', $html);
         file_put_contents($this->fileCached, $html);
         return $this->html();
     }
@@ -295,18 +314,19 @@ if(false){                static::instance()->html_prepend[] = "<?php \Core\Blad
             static::instance()->setHeredados($this->inputs);
         }
         $imports = static::instance()->getHeredados();
-        if(!empty($imports)) {
+        if (!empty($imports)) {
             extract($imports);
         }
         ob_start();
         include($this->fileCached);
         $html = ob_get_clean();
-        if(!$this->cache) {
+        if (!$this->cache) {
             @unlink($this->fileCached);
         }
         return $html;
     }
-    public function render() {
+    public function render()
+    {
         $time_start = microtime(true);
         if (file_exists($this->fileCached)) {
             $html = $this->html();
@@ -323,7 +343,7 @@ if(false){                static::instance()->html_prepend[] = "<?php \Core\Blad
                 $micro = $diff - $sec;
                 $html  = $html . "\n<!--- Compile: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . " = " . $this->fileCached . "-->\n";
                 return $html;
-            } catch(\Throwable $e) {
+            } catch (\Throwable $e) {
                 echo "<h3>File: " . $this->file . ":" . $e->getLine() . "</h3>";
                 $html = static::obtenerRangoLineasArchivo($this->fileCached, $e->getLine() - 5, $e->getLine() + 5);
                 echo "<pre>";
@@ -337,7 +357,8 @@ if(false){                static::instance()->html_prepend[] = "<?php \Core\Blad
     {
         return $this->render();
     }
-    static function obtenerRangoLineasArchivo($archivo, $inicio, $fin) {
+    static function obtenerRangoLineasArchivo($archivo, $inicio, $fin)
+    {
         $resultado = '';
         $lineaActual = 1;
         $manejadorArchivo = fopen($archivo, 'r');
