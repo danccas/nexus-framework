@@ -124,6 +124,7 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     }
     public function hydrate($model) {
         $this->model = $model;
+        $this->items = array_map(function($n) use($model) { return new $model((array) $n); }, $this->items);
         return $this;
     }
     public function sort($callback) {

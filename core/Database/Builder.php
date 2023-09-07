@@ -75,7 +75,7 @@ class Builder {
 		public function first() {
         $this->action = 'get';
         $this->first = true;
-        return $this->get();
+        return $this->get()->first();
     }
     public function all() {
         $this->action = 'get';

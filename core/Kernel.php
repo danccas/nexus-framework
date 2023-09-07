@@ -13,6 +13,7 @@ class Kernel
     private $request = null;
     private static $instance;
     private $routeMiddleware = [];
+    private $middlewareGroups = [];
 
     public static function instance()
     {
@@ -31,15 +32,24 @@ class Kernel
     }
     private function registerMiddlewares()
     {
-        $this->routeMiddleware = (new KernelHttp)->routeMiddleware;
+        $kernelHTTP = (new KernelHttp);
+        if (isset($kernelHTTP->routeMiddleware)) {
+            $this->routeMiddleware = $kernelHTTP->routeMiddleware;
+        }
+        if (isset($kernelHTTP->middlewareGroups)) {
+            $this->middlewareGroups = $kernelHTTP->middlewareGroups;
+        }
     }
     public function getMiddleware($key)
-		{
-			if(!empty($this->routeMiddleware[$key])) {
-				$Mclass = $this->routeMiddleware[$key];
-				return new $Mclass;
-			}
-			return null;
+    {
+        if(in_array($key, $this->routeMiddleware)) {
+            return new $key;
+        }
+        if (!empty($this->routeMiddleware[$key])) {
+            $Mclass = $this->routeMiddleware[$key];
+            return new $Mclass;
+        }
+        return null;
     }
     public function setRequest($request)
     {
@@ -72,19 +82,24 @@ class Kernel
     }
     public function registerRoute(Route $route)
     {
+        if (!empty($this->middlewareGroups[$route->getContext()])) {
+            foreach ($this->middlewareGroups[$route->getContext()] as $md) {
+                $route->middleware($md);
+            }
+        }
         $this->routes[] = $route;
     }
     public function getRoutes()
     {
         return $this->routes;
     }
-		public function getRoutesNames()
+    public function getRoutesNames()
     {
         $rp = [];
-        foreach($this->routes as $r) {
-            if(!empty($r)) {
+        foreach ($this->routes as $r) {
+            if (!empty($r)) {
                 $name = $r->getName();
-                if(!empty($name)) {
+                if (!empty($name)) {
                     $rp[$name] = $name;
                 }
             }
@@ -101,7 +116,7 @@ class Kernel
         return null;
     }
     public function debug()
-		{
+    {
         $rp = [];
         $request = new Request;
         echo "<table border=\"1\">";
@@ -129,35 +144,33 @@ class Kernel
     }
     public function terminate()
     {
-				$is_match = false;
+        $is_match = false;
         $request = new Request;
         $response = Response::instance();
         foreach ($this->routes as $e) {
-					if ($e->isMatch($request)) {
-						$is_match = true;
-	          $request->route = $e;
-            $response = $e->execute($request, $response);
-						if($response instanceof Response) {
-  						echo $response->execute();
-							exit;
-
-						} elseif(is_object($response)) {
-              echo $response->__toString();
-							exit;
-
-						} else {
-							echo $response;
-							exit;
-						}
-          }
-				}
-				if(!$is_match) {
-					if(isset($_GET['ddebug'])) {
-						echo $this->debug();
-						exit;
-					} else {
-						abort(404);
-					}
-				}
+            if ($e->isMatch($request)) {
+                $is_match = true;
+                $request->route = $e;
+                $response = $e->execute($request, $response);
+                if ($response instanceof Response) {
+                    echo $response->execute();
+                    exit;
+                } elseif (is_object($response)) {
+                    echo $response->__toString();
+                    exit;
+                } else {
+                    echo $response;
+                    exit;
+                }
+            }
+        }
+        if (!$is_match) {
+            if (isset($_GET['ddebug'])) {
+                echo $this->debug();
+                exit;
+            } else {
+                abort(404);
+            }
+        }
     }
 }

@@ -216,7 +216,7 @@ class Blade
             return  "<?= \Core\Blade::partViewCall('" . $res['name'] . "'); ?>";
         }, $html);
 
-        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/", function($res) {
+        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\=\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/", function($res) {
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
@@ -300,6 +300,8 @@ class Blade
         $html = str_replace("--}}", "-->", $html);
         $html = str_replace('{{', '<?=', $html);
         $html = str_replace('}}', '?>', $html);
+        $html = str_replace('{!!', '<?=', $html);
+        $html = str_replace('!!}', '?>', $html);
 
         $html = str_replace('@php', '<?php', $html);
         $html = str_replace('@endphp', '?>', $html);

@@ -9,11 +9,11 @@ use stdClass;
 
 class Route
 {
-	protected $id;
-	protected $is_terminate = false;
-	protected $is_relationalMiddleware = false;
-	public static $indexes = 0;
-	private static $_current = null;
+    protected $id;
+    protected $is_terminate = false;
+    protected $is_relationalMiddleware = false;
+    public static $indexes = 0;
+    private static $_current = null;
     public $method;
     private $prepared;
     public $regex; ##TODO
@@ -27,60 +27,65 @@ class Route
     private $name = [];
     private $permission;
     private $parameters = [];
-		private $request_params = [];
-		protected $middlewares = [];
-		protected $wheres = [];
-		protected $withs = [];
-		protected $querys = [];
+    private $request_params = [];
+    protected $middlewares = [];
+    protected $wheres = [];
+    protected $withs = [];
+    protected $querys = [];
 
     function __construct()
-		{
-      $this->id = ++static::$indexes;
-      if (Application::instance()->canRegisterRoute()) {
-	      $this->context = str_replace('.php', '', basename(Application::instance()->currentConfigRoute()));
-        Kernel::instance()->registerRoute($this);
-      }
-		}
-		public static function current() {
-			return static::$_current;
-		}
+    {
+        $this->id = ++static::$indexes;
+        if (Application::instance()->canRegisterRoute()) {
+            $this->context = str_replace('.php', '', basename(Application::instance()->currentConfigRoute()));
+            Kernel::instance()->registerRoute($this);
+        }
+    }
+    public static function current()
+    {
+        return static::$_current;
+    }
     public function getContext()
     {
         return $this->context;
-		}
-		public function firstName() {
-			if(is_array($this->name)) {
-				if(empty($this->name)) {
-          return null;
+    }
+    public function firstName()
+    {
+        if (is_array($this->name)) {
+            if (empty($this->name)) {
+                return null;
+            }
+            return $this->name[0];
         }
-				return $this->name[0];
-			}
-			return $this->name;
-		}
+        return $this->name;
+    }
     public function name($name)
-		{
-			if(empty($name)) {
-				$this->name = [$name];
-			}
-			if(!in_array($name, $this->name)) {
-				$this->name[] = $name;
-			}
-      return $this;
-		}
-		public function where($key, $val) {
-			$this->wheres[$key] = $val;
-		}
-		private function getRegular($key) {
-			if(!isset($this->wheres[$key])) {
-				return '[^\/]+';
-			}
-			return $this->wheres[$key];
-		}
+    {
+        if (empty($name)) {
+            $this->name = [$name];
+        }
+        if (!in_array($name, $this->name)) {
+            $this->name[] = $name;
+        }
+        return $this;
+    }
+    public function where($key, $val)
+    {
+        $this->wheres[$key] = $val;
+    }
+    private function getRegular($key)
+    {
+        if (!isset($this->wheres[$key])) {
+            return '[^\/]+';
+        }
+        return $this->wheres[$key];
+    }
     public function getName()
     {
         return $this->name;
     }
-    public function getLabels() {
+    public function getLabels()
+    {
         $rp = [];
         $rp[] = $this->name;
         $rp[] = $this->permission;
@@ -97,49 +102,49 @@ class Route
         return $this->permission;
     }
     public function compare($path)
-		{
-			if($this->regex == $path) {
-				return true;
-			}
-			if(is_array($this->name)) {
-				if(in_array($path, $this->name)) {
-					return true;
-				}
-			} else {
-				return $this->name == $path;
-			}
+    {
+        if ($this->regex == $path) {
+            return true;
+        }
+        if (is_array($this->name)) {
+            if (in_array($path, $this->name)) {
+                return true;
+            }
+        } else {
+            return $this->name == $path;
+        }
     }
     public function link($prepared = null)
-		{
-			if(is_null($prepared)) {
-				$prepared = $this->parameters;
-			}
-			if(!is_array($prepared)) {
-				$prepared = [$prepared];
-			}
-			$is_list = array_is_list($prepared);
-			$ce = $this;
-			$ii = 0;
-			$expresion_regular = preg_replace_callback("/\:(?<id>[\w_]+)\;?/", function ($n) use ($ce, &$prepared, $is_list, &$ii) {
-				if(!$is_list) {
-            if (!isset($prepared[$n['id']])) {
-                exit('Error: no existe el indice requerido');
+    {
+        if (is_null($prepared)) {
+            $prepared = $this->parameters;
+        }
+        if (!is_array($prepared)) {
+            $prepared = [$prepared];
+        }
+        $is_list = array_is_list($prepared);
+        $ce = $this;
+        $ii = 0;
+        $expresion_regular = preg_replace_callback("/\:(?<id>[\w_]+)\;?/", function ($n) use ($ce, &$prepared, $is_list, &$ii) {
+            if (!$is_list) {
+                if (!isset($prepared[$n['id']])) {
+                    exit('Error: no existe el indice requerido');
+                }
+                $res = $prepared[$n['id']];
+            } else {
+                $res = array_shift($prepared);
             }
-						$res = $prepared[$n['id']];
-				} else {
-					$res = array_shift($prepared);
-				}
             if ($res instanceof Model) {
                 $res = $res->{$res->getPrimaryKey()};
-						}
-						$ii++;
+            }
+            $ii++;
             return $res;
-			}, $this->regex, -1, $cantidad);
-			$query = '';
-			if(!empty($this->querys)) {
-				$query = '?' . http_build_query($this->querys);
-			}
-      return '/' . $expresion_regular . $query;
+        }, $this->regex, -1, $cantidad);
+        $query = '';
+        if (!empty($this->querys)) {
+            $query = '?' . http_build_query($this->querys);
+        }
+        return '/' . $expresion_regular . $query;
     }
 
     public function isMatch($request)
@@ -195,19 +200,22 @@ class Route
             //app()->putURI($sub);
         }
         return $e;
-		}
-		public function setParameters($pp) {
-			$this->parameters = $pp;
-			return $this;
-		}
-		public function query($key, $val) {
-			$this->querys[$key] = $val;
-			return $this;
     }
-		public function with($key, $val) {
-			$this->withs[$key] = $val;
-			return $this;
-		}
+    public function setParameters($pp)
+    {
+        $this->parameters = $pp;
+        return $this;
+    }
+    public function query($key, $val)
+    {
+        $this->querys[$key] = $val;
+        return $this;
+    }
+    public function with($key, $val)
+    {
+        $this->withs[$key] = $val;
+        return $this;
+    }
     private function isControllerFormat()
     {
         if (is_string($this->callback)) {
@@ -218,7 +226,7 @@ class Route
     public function isControllerValid()
     {
         $this->controller = explode('@', $this->callback);
-        if(!class_exists($this->controller[0])) {
+        if (!class_exists($this->controller[0])) {
             $this->controller[0] = "App\\Http\\Controllers\\" . $this->controller[0];
         }
         return method_exists($this->controller[0], $this->controller[1]);
@@ -254,12 +262,12 @@ class Route
         }
         $rp = [];
         foreach ($reflections as $n) {
-					if (is_subclass_of($n->type, 'Core\Model')) {
-						$typeVal = (new $n->type)->getKeyType();
-						if(!is_type($n->result, $typeVal)) {
-							return false;
-						}
-//						dd([$parameters, $n->result, (new $n->type)->find($n->result)]);
+            if (is_subclass_of($n->type, 'Core\Model')) {
+                $typeVal = (new $n->type)->getKeyType();
+                if (!is_type($n->result, $typeVal)) {
+                    return false;
+                }
+                //						dd([$parameters, $n->result, (new $n->type)->find($n->result)]);
                 if ($res = ((new $n->type)->find($n->result)->first())) {
                     if ($res->getExists()) {
                         $rp[] = $res;
@@ -317,18 +325,18 @@ class Route
         return !empty($this->middlewares);
     }
     private function relationalMiddleware()
-		{
-			if(!$this->is_relationalMiddleware) {
-				$this->is_relationalMiddleware = true;
-        $ce = $this;
-        $this->middlewares = array_map(function ($key) use ($ce) {
-            return Kernel::instance()->getMiddleware($key);
-				}, $this->middlewares);
-			}
+    {
+        if (!$this->is_relationalMiddleware) {
+            $this->is_relationalMiddleware = true;
+            $ce = $this;
+            $this->middlewares = array_map(function ($key) use ($ce) {
+                return Kernel::instance()->getMiddleware($key);
+            }, $this->middlewares);
+        }
     }
     public function execute($request, $response)
-		{
-			static::$_current = $this;
+    {
+        static::$_current = $this;
         if ($this->hasMiddleware()) {
             $next = true;
             $res = null;
@@ -347,8 +355,8 @@ class Route
         if ($this->isControllerFormat()) {
             if ($this->isControllerValid()) {
                 $reflection = $this->reflectionController();
-								$rp = $this->injectionController($reflection, $request, $response);
-								$this->terminate();
+                $rp = $this->injectionController($reflection, $request, $response);
+                $this->terminate();
                 return $rp;
             } else {
                 exit('Invalid Method = ' . $this->callback);
@@ -356,19 +364,20 @@ class Route
         } else {
             exit('Formato Controller invalido');
         }
-		}
-		public function terminate() {
-			if(!$this->is_terminate) {
-				$this->is_terminate = true;
-				if ($this->hasMiddleware()) {
-					foreach ($this->middlewares as $m) {
-			      if (method_exists($m, 'terminate')) {
-			        $m->terminate(Request::instance(), Response::instance());
-		        }
-					}
-				}
-			}
-		}
+    }
+    public function terminate()
+    {
+        if (!$this->is_terminate) {
+            $this->is_terminate = true;
+            if ($this->hasMiddleware()) {
+                foreach ($this->middlewares as $m) {
+                    if (method_exists($m, 'terminate')) {
+                        $m->terminate(Request::instance(), Response::instance());
+                    }
+                }
+            }
+        }
+    }
     public function setMethod($method)
     {
         if (is_string($method)) {
@@ -392,13 +401,13 @@ class Route
         return $this;
     }
     public function setPrepared($prepared)
-		{
-			if(is_array($prepared)) {
-				foreach($prepared as $key => $val) {
-					$this->where($key, $val);
-				}
-			}
-      return $this;
+    {
+        if (is_array($prepared)) {
+            foreach ($prepared as $key => $val) {
+                $this->where($key, $val);
+            }
+        }
+        return $this;
     }
     public function setController($controller)
     {
@@ -410,10 +419,12 @@ class Route
     {
         $this->middlewares[] = $cb;
     }
-    public static function find($name) {
+    public static function find($name)
+    {
         return kernel()->findRoute($name);
     }
-    public static function exists($name) {
+    public static function exists($name)
+    {
         return kernel()->findRoute($name) !== null;
     }
     private static function __request($method, $a1, $a2, $a3 = null)
@@ -427,7 +438,7 @@ class Route
             $prepared = $a2;
             $controller = $a3;
         }
-        if($method == 'resource') {
+        if ($method == 'resource') {
             return (new RouteResource($regex, $controller));
         }
         return (new Route)
@@ -446,10 +457,10 @@ class Route
     }
     public static function match($a1, $a2, $a3 = null)
     {
-      foreach($a1 as $k) {
-        static::__request($k, $a1, $a2, $a3);
-      }
-      return null;
+        foreach ($a1 as $k) {
+            static::__request($k, $a1, $a2, $a3);
+        }
+        return null;
     }
     public static function post($a1, $a2, $a3 = null)
     {
@@ -470,8 +481,9 @@ class Route
     public static function path($a1, $a2, $a3 = null)
     {
         return static::__request('path', $a1, $a2, $a3);
-		}
-		public function __toString() {
-			return $this->link();
-		}
+    }
+    public function __toString()
+    {
+        return $this->link();
+    }
 }
