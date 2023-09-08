@@ -120,14 +120,15 @@ class Kernel
         $rp = [];
         $request = new Request;
         echo "<table border=\"1\">";
-        echo "<thead><tr><th>Context</th><th>Method</th><th>Route</th><th>Controller</th><th>Name</th><th>Arguments</th><th>V.Method</th><th>V.Route</th><th>V.Controller</th><th>V.Arguments</th></tr></thead>";
+        echo "<thead><tr><th>Context</th><th>Method</th><th>Midd</th><th>Route</th><th>Controller</th><th>Name</th><th>Arguments</th><th>V.Method</th><th>V.Route</th><th>V.Controller</th><th>V.Arguments</th></tr></thead>";
         echo "<tbody>";
         foreach ($this->routes as $e) {
             echo "<tr>";
             echo "<td>" . $e->getContext() . "</td>";
             $rp[] = array($e, $e->isMatch($request) ? 'CUMPLE' : 'No');
             echo "<td>" . implode(',', $e->method) . "</td>";
-            echo "<td>" . $e->regex . "</td>";
+            echo "<td>" . (implode(',', $e->getMiddlewares())) . "</td>";
+            echo "<td>" . (is_array($e->regex) ? implode(',', $e->regex) : $e->regex) . "</td>";
             echo "<td>" . $e->callback . "</td>";
             echo "<td>" . implode(',', $e->getName()) . "</td>";
             echo "<td>" . implode(', ', array_map(function ($n) {

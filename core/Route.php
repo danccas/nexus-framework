@@ -267,8 +267,8 @@ class Route
                 if (!is_type($n->result, $typeVal)) {
                     return false;
                 }
-                //						dd([$parameters, $n->result, (new $n->type)->find($n->result)]);
-                if ($res = ((new $n->type)->find($n->result)->first())) {
+                //                                              dd([$parameters, $n->result, (new $n->type)->find($n->result)]);
+                if ($res = ((new $n->type)->find($n->result))) {
                     if ($res->getExists()) {
                         $rp[] = $res;
                     } else {
@@ -292,7 +292,7 @@ class Route
         }
         $params = array_map(function ($n) {
             if (is_subclass_of($n->type, 'Core\Model')) {
-                return (new $n->type)->find($n->result)->first();
+                return (new $n->type)->find($n->result);
             }
             return $n->result;
         }, $reflections);
@@ -419,6 +419,9 @@ class Route
     {
         $this->middlewares[] = $cb;
     }
+    public function getMiddlewares() {
+      return $this->middlewares;
+    }
     public static function find($name)
     {
         return kernel()->findRoute($name);
@@ -441,6 +444,13 @@ class Route
         if ($method == 'resource') {
             return (new RouteResource($regex, $controller));
         }
+        if(is_array($method)) {
+          $method = array_map(function($n) {
+            return strtoupper($n);
+          }, $method);
+        } else {
+          $method = strtoupper($method);
+        }
         return (new Route)
             ->setMethod($method)
             ->setRegex($regex)
@@ -455,11 +465,11 @@ class Route
     {
         return static::__request('any', $a1, $a2, $a3);
     }
-    public static function match($a1, $a2, $a3 = null)
+    public static function match($a1, $a2, $a3 = null, $a4 = null)
     {
-        foreach ($a1 as $k) {
-            static::__request($k, $a1, $a2, $a3);
-        }
+#        foreach ($a1 as $k) {
+            static::__request($a1, $a2, $a3, $a4);
+#        }
         return null;
     }
     public static function post($a1, $a2, $a3 = null)
