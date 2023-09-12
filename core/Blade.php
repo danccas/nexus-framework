@@ -146,7 +146,7 @@ class Blade
     }
     private static function preCompileBasic($html)
     {
-        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[\w\[\]\$\=\>\'\.\s\á\é\í\ó\ú\,\"\-\_\)\(]+((\)|\]|\]\)))))?\)\n/", function ($res) {
+        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[\w\[\]\$\=\>\'\.\s\á\é\í\ó\ú\Á\É\Í\Ó\Ú\,\"\-\_\)\(]+((\)|\]|\]\)))))?\)\n/", function ($res) {
             if ($res['type'] == 'include') {
                 $th = (new Blade($res['name'], false));
                 $rp = '';
