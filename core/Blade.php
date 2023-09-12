@@ -146,7 +146,7 @@ class Blade
     }
     private static function preCompileBasic($html)
     {
-        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[^\)]+(\)?)))?\)/", function ($res) {
+        $html = preg_replace_callback("/@(?<type>(include|tablefy))\([\"'](?<name>[^\"']+)[\"'](?:\s*,\s*(?<params>[\w\[\]\$\=\>\'\.\s\á\é\í\ó\ú\,\"\-\_\)\(]+((\)|\]|\]\)))))?\)\n/", function ($res) {
             if ($res['type'] == 'include') {
                 $th = (new Blade($res['name'], false));
                 $rp = '';
@@ -216,15 +216,15 @@ class Blade
             return  "<?= \Core\Blade::partViewCall('" . $res['name'] . "'); ?>";
         }, $html);
 
-        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\=\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/", function($res) {
+        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\=\,\/\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/", function($res) {
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\s\&\$\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function($res) {
+        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\,\s\&\$\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function ($res) {
             return  "<?php if(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[^\)]+)\)/', function ($res) {
+        $html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[\!\=\,\s\&\$\w\\\:\(\)\_\<\>\-\"\'\[\]]+)\)/', function ($res) {
             return  "<?php } elseif(" . $res['for'] . ") { ?>\n";
         }, $html);
 
@@ -303,6 +303,8 @@ class Blade
         $html = str_replace('{!!', '<?=', $html);
         $html = str_replace('!!}', '?>', $html);
 
+        $html = str_replace('@parent', '', $html);
+        $html = str_replace('@csrf', '', $html);
         $html = str_replace('@php', '<?php', $html);
         $html = str_replace('@endphp', '?>', $html);
         $html = str_replace('@else', '<?php } else { ?>', $html);
@@ -319,9 +321,13 @@ class Blade
         if (!empty($imports)) {
             extract($imports);
         }
-        ob_start();
-        include($this->fileCached);
-        $html = ob_get_clean();
+        try {
+            ob_start();
+            include($this->fileCached);
+            $html = ob_get_clean();
+        } catch (\Exception $e) {
+            kernel()->exception($e->getMessage(), $e);
+        }
         if (!$this->cache) {
             @unlink($this->fileCached);
         }
@@ -346,6 +352,9 @@ class Blade
                 $html  = $html . "\n<!--- Compile: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . " = " . $this->fileCached . "-->\n";
                 return $html;
             } catch (\Throwable $e) {
+                $html = static::obtenerRangoLineasArchivo($this->fileCached, $e->getLine() - 5, $e->getLine() + 5);
+                kernel()->exception($e->getMessage() . '<br>' . $this->file . "<br><pre>" . htmlspecialchars($html) . '</pre>', $e);
+
                 echo "<h3>File: " . $this->file . ":" . $e->getLine() . "</h3>";
                 $html = static::obtenerRangoLineasArchivo($this->fileCached, $e->getLine() - 5, $e->getLine() + 5);
                 echo "<pre>";

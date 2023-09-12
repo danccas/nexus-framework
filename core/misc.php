@@ -1,30 +1,46 @@
 <?php
+
 use App\Auth;
-function csrf_token() {
+
+function csrf_token()
+{
   return null;
 }
-
-function is_type($val, $type) {
-	if($type == 'int') {
-		return is_numeric($val);
-	} else if($type == 'string') {
-		return true;
-	}
-	return false;
+if (!function_exists('byteConvert')) {
+  function byteConvert($bytes)
+  {
+    if ($bytes == 0) {
+      return "0.00 B";
+    }
+    $s = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
+    $e = floor(log($bytes, 1024));
+    return round($bytes / pow(1024, $e), 2) . $s[$e];
+  }
+}
+function is_type($val, $type)
+{
+  if ($type == 'int') {
+    return is_numeric($val);
+  } else if ($type == 'string') {
+    return true;
+  }
+  return false;
 }
 if (!function_exists('array_is_list')) {
-    function array_is_list(array $arr)
-    {
-        if ($arr === []) {
-            return true;
-        }
-        return array_keys($arr) === range(0, count($arr) - 1);
+  function array_is_list(array $arr)
+  {
+    if ($arr === []) {
+      return true;
     }
+    return array_keys($arr) === range(0, count($arr) - 1);
+  }
 }
-function table($data = -1) {
+function table($data = -1)
+{
   return dom()->table($data);
 }
-function dom() {
+function dom()
+{
   return new Core\DOMDx;
 }
 function dd($data)
@@ -33,18 +49,34 @@ function dd($data)
   print_r($data);
   exit;
 }
-function asset($path) {
+function config($key)
+{
+  return app()->getConfig($key);
+}
+if (!function_exists('env')) {
+  function env($name, $ifno = null)
+  {
+    $data = getenv($name);
+    if ($data === false) {
+      return $ifno;
+    }
+    return $data;
+  }
+}
+function asset($path)
+{
   return '/' . $path;
 }
-function clock($tt = -1) {
+function clock($tt = -1)
+{
   return new Core\Clock($tt);
 }
 
 if (!function_exists('collect')) {
-	function collect($items = null)
-	{
-		return new Core\Concerns\Collection($items);
-	}
+  function collect($items = null)
+  {
+    return new Core\Concerns\Collection($items);
+  }
 }
 function cache($id)
 {
@@ -53,24 +85,25 @@ function cache($id)
 #function can_do($content, $action, $value, $minutes) {
 #	return can_do($content, $action . $value, $minutes);
 #}
-function can_do($context, $action, $seconds, $times = 1) {
+function can_do($context, $action, $seconds, $times = 1)
+{
   $cache = cache($context);
-	$ll = $cache->item($action);
-	$pass = 0;
-	if(!empty($ll)) {
-		foreach($ll as $t) {
-			$res = $t >= time() - $seconds;
-			if($res) {
-				$pass++;
-			} else {
-				$cache->item_delete($action, $t);
-			}
-		}
-    if($pass < $times) {
-			$cache->item_append($action, time());
-			return true;
-		} else {
-			return false;
+  $ll = $cache->item($action);
+  $pass = 0;
+  if (!empty($ll)) {
+    foreach ($ll as $t) {
+      $res = $t >= time() - $seconds;
+      if ($res) {
+        $pass++;
+      } else {
+        $cache->item_delete($action, $t);
+      }
+    }
+    if ($pass < $times) {
+      $cache->item_append($action, time());
+      return true;
+    } else {
+      return false;
     }
   }
   $cache->item_append($action, time());
@@ -92,29 +125,30 @@ function redirect($route)
 {
   return response()->redirect($route);
 }
-if (! function_exists('abort_if')) {
-function abort_if($boolean, $code, $message = '', array $headers = [])
-{
-        if ($boolean) {
-            abort($code, $message, $headers);
-        }
+if (!function_exists('abort_if')) {
+  function abort_if($boolean, $code, $message = '', array $headers = [])
+  {
+    if ($boolean) {
+      abort($code, $message, $headers);
     }
+  }
 }
-if (! function_exists('abort_unless')) {
-function abort_unless($boolean, $code, $message = '', array $headers = [])
-{
-        if (! $boolean) {
-            abort($code, $message, $headers);
-        }
+if (!function_exists('abort_unless')) {
+  function abort_unless($boolean, $code, $message = '', array $headers = [])
+  {
+    if (!$boolean) {
+      abort($code, $message, $headers);
     }
+  }
 }
 
-function abort($status, $message = null, $headers = []) {
-	return response()->abort($status, $message);
+function abort($status, $message = null, $headers = [])
+{
+  return response()->abort($status, $message);
 }
 function view($theme, $variables = [])
 {
-	return response()->view($theme, $variables);
+  return response()->view($theme, $variables);
 }
 function app($container = null)
 {
@@ -136,8 +170,9 @@ function response()
 {
   return Core\Response::instance();
 }
-function blade() {
-	return response()->blade();
+function blade()
+{
+  return response()->blade();
 }
 
 function route($name = -1, $params = array())
@@ -146,11 +181,11 @@ function route($name = -1, $params = array())
     return new Core\Route;
   }
   $rr = kernel()->findRoute($name);
-  if(empty($rr)) {
-    exit('url no existe: ' . $name);
-	}
-	$rr->setParameters($params);
-	return $rr;
+  if (empty($rr)) {
+    kernel()->exception('route no exists: ' . $name);
+  }
+  $rr->setParameters($params);
+  return $rr;
 }
 
 if (!function_exists('getallheaders')) {
@@ -169,7 +204,8 @@ function toHashtag($txt)
 {
   return trim(str_replace('#', '', str_replace(' ', '', ucwords(strtolower($txt)))));
 }
-function humanSize($bytes) {
+function humanSize($bytes)
+{
   if (!is_numeric($bytes)) {
     return 'Invalid input';
   }
@@ -247,12 +283,13 @@ function obtener_iniciales($n)
   }
   return strtoupper($n);
 }
-function geo_address( $lat, $lng){
+function geo_address($lat, $lng)
+{
 
-	$direccion = '--';
+  $direccion = '--';
 
   try {
-		/*$url = 'http://209.145.54.12/geo_address?lat=' . $lat . '&lon=' . $lng;
+    /*$url = 'http://209.145.54.12/geo_address?lat=' . $lat . '&lon=' . $lng;
 		$cnx = curl_init();
 		curl_setopt($cnx, CURLOPT_URL, $url);
 		curl_setopt($cnx, CURLOPT_RETURNTRANSFER, true);
@@ -260,8 +297,8 @@ function geo_address( $lat, $lng){
 
 		$direccion = curl_exec($cnx);
 		curl_close($cnx);*/
-		return $direccion;
-  } catch ( \Exception $e){
+    return $direccion;
+  } catch (\Exception $e) {
     return '--';
   }
 }
@@ -852,13 +889,13 @@ function tiempo_transcurrido($fecha = 'now')
 
 
   global $DIAS, $MESES;
-  
-  
-  
+
+
+
   if (empty($fecha)) {
     return '';
   }
-  
+
   $fecha = !empty($fecha) ? (is_numeric($fecha) ? $fecha : strtotime($fecha)) : time();
   $ahora = time();
   if (empty($fecha)) {
@@ -901,13 +938,12 @@ function tiempo_transcurrido($fecha = 'now')
     #    $txt     = $DIAS[date('w', $fecha)];
   } elseif ($diferencia <= $DIA * 8) {
     $txt     = 'una semana';
-  } elseif ($diferencia <= $MES - 5 * $DIA) { 
-  
- 
+  } elseif ($diferencia <= $MES - 5 * $DIA) {
+
+
     $prefijo = $signo ? 'El próximo ' : 'El pasado ';
     $sufijo  = '';
     $txt     = $DIAS[date('w', $fecha)] . ' ' . date('d', $fecha);
-
   } elseif ($diferencia <= $MES + 5 * $DIA) {
     $txt = 'un mes';
   } elseif ($diferencia <= $ANHO - 2 * $MES) {
@@ -1170,22 +1206,23 @@ function array2csv($data, $delimiter = ',', $enclosure = '"', $escape_char = "\\
   rewind($f);
   return stream_get_contents($f);
 }
-function array_to_csv_download($array, $filename = "export.csv", $delimiter=";") {
-    // open raw memory as file so no temp files needed, you might run out of memory though
-    $f = fopen('php://memory', 'w'); 
-    // loop over the input array
-    foreach ($array as $line) { 
-        // generate csv lines from the inner arrays
-        fputcsv($f, $line, $delimiter); 
-    }
-    // reset the file pointer to the start of the file
-    fseek($f, 0);
-    // tell the browser it's going to be a csv file
-    header('Content-Type: text/csv');
-    // tell the browser we want to save it instead of displaying it
-    header('Content-Disposition: attachment; filename="'.$filename.'";');
-    // make php send the generated csv lines to the browser
-    fpassthru($f);
+function array_to_csv_download($array, $filename = "export.csv", $delimiter = ";")
+{
+  // open raw memory as file so no temp files needed, you might run out of memory though
+  $f = fopen('php://memory', 'w');
+  // loop over the input array
+  foreach ($array as $line) {
+    // generate csv lines from the inner arrays
+    fputcsv($f, $line, $delimiter);
+  }
+  // reset the file pointer to the start of the file
+  fseek($f, 0);
+  // tell the browser it's going to be a csv file
+  header('Content-Type: text/csv');
+  // tell the browser we want to save it instead of displaying it
+  header('Content-Disposition: attachment; filename="' . $filename . '";');
+  // make php send the generated csv lines to the browser
+  fpassthru($f);
 }
 function standard_string($string)
 {

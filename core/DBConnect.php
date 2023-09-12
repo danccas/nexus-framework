@@ -13,6 +13,7 @@ class DBConnect
     protected $parameters = [];
     protected $executed = false;
     protected $connection;
+    protected $core;
 
     function __construct($dsn)
     {
@@ -23,31 +24,40 @@ class DBConnect
     {
         return $this->engine->execute($this->connection, $query, $prepare);
     }
-    public function engine() {
+    public function engine()
+    {
         return $this->engine;
     }
-    public function clearQuery() {
+    public function clearQuery()
+    {
         $this->engine->clearQuery();
         return $this;
     }
-    function preConnect() {
+    function preConnect()
+    {
         $ce = $this;
         $this->executed = false;
-        if($this->protocol == 'pgsql') {
+        if ($this->protocol == 'pgsql') {
             $this->engine = new DBPSQL($this);
         } else {
             exit('TODO DB PROTOCOL');
         }
         $this->connection = function () use (&$ce) {
             $ce->executed = true;
-            return $ce->engine->connect($ce);
+            return $ce->engine->connect();
         };
     }
-    public function connect() {
-        if(!$this->executed) {
+    public function connect()
+    {
+        if (!$this->executed) {
             $this->executed = true;
             $this->connection = ($this->connection)();
         }
+    }
+    public function setCore($core)
+    {
+        $this->core = $core;
+        return $this;
     }
     public function getProtocol()
     {
@@ -64,6 +74,10 @@ class DBConnect
     public function getDatabase()
     {
         return $this->database;
+    }
+    public function except($message, $e = null)
+    {
+        $this->core->except($message, $e);
     }
     private function parseProtocol($dsn)
     {

@@ -42,7 +42,7 @@ class Kernel
     }
     public function getMiddleware($key)
     {
-        if(in_array($key, $this->routeMiddleware)) {
+        if (in_array($key, $this->routeMiddleware)) {
             return new $key;
         }
         if (!empty($this->routeMiddleware[$key])) {
@@ -115,6 +115,18 @@ class Kernel
         }
         return null;
     }
+    public function exception($message, $e = null)
+    {
+        $html = ob_get_clean();
+        echo "<table border=\"1\"><tr>";
+        echo "<th>" . $message . "</th>";
+        echo "</tr><tr>";
+        echo "<td><pre>";
+        print_r($e);
+        echo "</pre></td>";
+        echo "</tr></table>";
+        exit;
+    }
     public function debug()
     {
         $rp = [];
@@ -152,7 +164,13 @@ class Kernel
             if ($e->isMatch($request)) {
                 $is_match = true;
                 $request->route = $e;
-                $response = $e->execute($request, $response);
+                try {
+                    $response = $e->execute($request, $response);
+                } catch (\Throwable $e) {
+                    $this->exception($e->getMessage(), $e);
+                } catch (\Exception $e) {
+                    $this->exception($e->getMessage(), $e);
+                }
                 if ($response instanceof Response) {
                     echo $response->execute();
                     exit;

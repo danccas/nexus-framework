@@ -583,7 +583,7 @@ class PaginationQuery
                 'page_prev' => $this->page_prev,
                 'page_next' => $this->page_next,
                 'actions' => $this->actions,
-                'items' => !empty($this->items) ?  $this->items->toArray() : [],
+                'items' => !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [],
             ]
         ];
     }

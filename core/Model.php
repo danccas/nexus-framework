@@ -84,18 +84,33 @@ class Model implements \JsonSerializable
         return $dd->first();
     }
 
-    public static function where($key, $compare, $value)
+    public static function where($key, $compare, $value = null)
     {
+        if (is_null($value)) {
+            $value = $compare;
+            $compare = '=';
+        }
         return static::query()->where($key, $compare, $value);
+    }
+    public static function whereNull($key)
+    {
+        return static::query()->whereNull($key);
     }
     public function hasMany($model, $fk_id)
     {
         return $model::query()->where($fk_id, '=', $this->id);
     }
-    public function belongsTo($model, $field_id, $fk_id = 'id')
+    public function belongsTo($model, $field_id = null, $fk_id = 'id')
     {
+        if (is_null($field_id)) {
+            $field_id = (new $model)->getTable() . '_id';
+        }
+        if (!isset($this->{$field_id}) || empty($this->{$field_id})) {
+            return collect([]);
+        }
         return $model::query()->where($fk_id, '=', $this->{$field_id});
     }
+
     public static function create($values)
     {
         $values = (array) $values;

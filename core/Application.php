@@ -65,13 +65,46 @@ class Application
         $this->kernel->setURI($uri);
         return $this;
     }
+    public function hasContextConfig($name)
+    {
+        return isset($this->config[$name]);
+    }
+    public function getContextConfig($name)
+    {
+        return $this->config[$name];
+    }
+    public function getConfig($tree)
+    {
+        $sector = $this->config;
+        $tree = explode('.', $tree);
+        foreach ($tree as $key => $val) {
+            if ($key == 0) {
+                if (!isset($sector[$val])) {
+                    return null;
+                }
+                $sector = $sector[$val];
+            } elseif ($key == (count($tree) - 1)) {
+                if (isset($sector[$val])) {
+                    return $sector[$val];
+                } else {
+                    return null;
+                }
+            } else {
+                if (isset($sector[$val])) {
+                    $sector = $sector[$val];
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
     public function registerConfiguresAvailable()
     {
         $this->can_register_configs = true;
         $dotenv = Dotenv::createUnsafeImmutable($this->basePath);
         $dotenv->safeLoad();
 
-        $files_apps = ['app'];
+        $files_apps = ['app', 'constants', 'database'];
         foreach ($files_apps as $a) {
             $url = $this->basePath . 'config/' . $a . '.php';
             if (file_exists($url)) {
@@ -87,14 +120,16 @@ class Application
         $ce = $this;
         spl_autoload_register(function ($class) use (&$ce) {
             foreach ($ce->config as $config) {
-                foreach ($config['aliases'] as $key => $val) {
-                    if ($class == $key) {
-                        $file = $this->basePath . lcfirst(str_replace('\\', '/', $val)) . '.php';
-                        if (file_exists($file)) {
-                            class_alias($val, $key, true);
-                        } else {
-                            echo "FF = " . $file;
-                            exit;
+                if (!empty($config['aliases'])) {
+                    foreach ($config['aliases'] as $key => $val) {
+                        if ($class == $key) {
+                            $file = $this->basePath . lcfirst(str_replace('\\', '/', $val)) . '.php';
+                            if (file_exists($file)) {
+                                class_alias($val, $key, true);
+                            } else {
+                                echo "FF = " . $file;
+                                exit;
+                            }
                         }
                     }
                 }

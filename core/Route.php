@@ -125,7 +125,10 @@ class Route
         $is_list = array_is_list($prepared);
         $ce = $this;
         $ii = 0;
-        $expresion_regular = preg_replace_callback("/\:(?<id>[\w_]+)\;?/", function ($n) use ($ce, &$prepared, $is_list, &$ii) {
+        $expresion_regular = preg_replace_callback("/((\:(?<id>[\w_]+))|(\{(?<id2>[\w_]+)\}))/", function ($n) use ($ce, &$prepared, $is_list, &$ii) {
+            if(!empty($n['id2'])) {
+              $n['id'] = $n['id2'];
+            }
             if (!$is_list) {
                 if (!isset($prepared[$n['id']])) {
                     exit('Error: no existe el indice requerido');
@@ -183,7 +186,10 @@ class Route
         $query = Kernel::instance()->getURI();
         $route = str_replace('/', '\/', $this->regex);
         $ce = $this;
-        $expresion_regular = preg_replace_callback("/\:(?<id>[\w_]+)\;?/", function ($n) use ($ce) {
+        $expresion_regular = preg_replace_callback("/((\:(?<id>[\w_]+))|(\{(?<id2>[\w_]+)\}))/", function ($n) use ($ce) {
+            if (!empty($n['id2'])) {
+                $n['id'] = $n['id2'];
+            }
             $regexp = $ce->getRegular($n['id']);
             $regexp = "(?P<" . $n['id'] . ">" . $regexp . ")";
             return $regexp;
@@ -359,10 +365,10 @@ class Route
                 $this->terminate();
                 return $rp;
             } else {
-                exit('Invalid Method = ' . $this->callback);
+                kernel()->exception('Invalid Method = ' . $this->callback);
             }
         } else {
-            exit('Formato Controller invalido');
+          kernel()->exception('Formato Controller invalido');
         }
     }
     public function terminate()
@@ -397,7 +403,7 @@ class Route
     }
     public function setRegex($regex)
     {
-        $this->regex = $regex;
+        $this->regex = trim($regex, '/');
         return $this;
     }
     public function setPrepared($prepared)
@@ -419,8 +425,9 @@ class Route
     {
         $this->middlewares[] = $cb;
     }
-    public function getMiddlewares() {
-      return $this->middlewares;
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
     }
     public static function find($name)
     {
@@ -444,12 +451,12 @@ class Route
         if ($method == 'resource') {
             return (new RouteResource($regex, $controller));
         }
-        if(is_array($method)) {
-          $method = array_map(function($n) {
-            return strtoupper($n);
-          }, $method);
+        if (is_array($method)) {
+            $method = array_map(function ($n) {
+                return strtoupper($n);
+            }, $method);
         } else {
-          $method = strtoupper($method);
+            $method = strtoupper($method);
         }
         return (new Route)
             ->setMethod($method)
@@ -467,9 +474,9 @@ class Route
     }
     public static function match($a1, $a2, $a3 = null, $a4 = null)
     {
-#        foreach ($a1 as $k) {
-            static::__request($a1, $a2, $a3, $a4);
-#        }
+        #        foreach ($a1 as $k) {
+        static::__request($a1, $a2, $a3, $a4);
+        #        }
         return null;
     }
     public static function post($a1, $a2, $a3 = null)
