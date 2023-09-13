@@ -60,6 +60,12 @@ if (!function_exists('env')) {
     if ($data === false) {
       return $ifno;
     }
+    if(strtolower($data) === 'false') {
+      return false;
+    }
+    if(strtolower($data) === 'true') {
+      return true;
+    }
     return $data;
   }
 }
