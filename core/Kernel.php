@@ -117,15 +117,19 @@ class Kernel
     }
     public function exception($message, $e = null)
     {
-        $html = ob_get_clean();
-        echo "<table border=\"1\"><tr>";
-        echo "<th>" . $message . "</th>";
-        echo "</tr><tr>";
-        echo "<td><pre>";
-        print_r($e);
-        echo "</pre></td>";
-        echo "</tr></table>";
-        exit;
+        if(config('app.debug')) {
+            $html = ob_get_clean();
+            echo "<table border=\"1\"><tr>";
+            echo "<th>" . $message . "</th>";
+            echo "</tr><tr>";
+            echo "<td><pre>";
+            print_r($e);
+            echo "</pre></td>";
+            echo "</tr></table>";
+            exit;
+        } else {
+            exit;
+        }
     }
     public function debug()
     {
