@@ -5,6 +5,7 @@ namespace Core;
 use Core\Kernel;
 use Core\Route;
 use Dotenv\Dotenv;
+use Core\DB;
 
 class Application
 {
@@ -36,11 +37,12 @@ class Application
         }
 
         $this->basePath = $basePath;
-        #require_once $this->basePath . 'core/misc.php';
+
         require_once __DIR__ . '/misc.php';
         $this->initializeKernel();
         $this->registerConfiguresAvailable();
         $this->registerAliasesAvailable();
+        $this->registerDatabaseAvailable();
         $this->registerRoutesAvailable();
         return $this;
     }
@@ -135,6 +137,21 @@ class Application
                 }
             }
         });
+    }
+    public function registerDatabaseAvailable() {
+        if(empty($this->config['database'])) {
+            return;
+        }
+        if(empty($this->config['database']['connections'])) {
+            return;
+        }
+        foreach ($this->config['database']['connections'] as $alias => $config) {
+            if(is_string($config)) {
+                DB::createDSN($alias, $config);
+            } elseif(is_array($config)) {
+                DB::createDSN($alias, $config['dsn']);
+            }
+        }
     }
     public function currentConfigRoute()
     {
