@@ -71,7 +71,7 @@ if (!function_exists('env')) {
 }
 function asset($path)
 {
-  return '/' . $path;
+  return '/assets/' . $path;
 }
 function clock($tt = -1)
 {
