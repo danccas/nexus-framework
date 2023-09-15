@@ -159,11 +159,8 @@ class Blade
                 //dd( serialize($res['params']));
                 //exit();
                 $tuq = 't' . uniqid();
-                if (false) {
-                    static::instance()->html_prepend[] = "<?php \Core\Blade::partView('styles', function(\$params) {?>"
-                        . '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" /><?php }); ?>';
-                }
-
+                static::instance()->html_prepend[] = "<?php \Core\Blade::partView('styles', function(\$params) {?>"
+                    . '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" /><?php }); ?>';
                 static::instance()->html_prepend[] = "<?php \Core\Blade::partView('scripts', function(\$params) {?>"
                     . '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
