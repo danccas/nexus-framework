@@ -14,6 +14,8 @@ class Blade
     protected $inputs = [];
     protected $heredados = [];
 
+    protected $components = [];
+
     public static $indexes = 0;
     private static $instance;
     public $partes = [];
@@ -35,6 +37,10 @@ class Blade
         if (!is_null($file)) {
             $this->load($file, $cache);
         }
+    }
+    public static function component($dom, $classComponent) {
+        static::instance()->components[$dom] = $classComponent;
+        return static::instance();
     }
     public function name()
     {
@@ -96,6 +102,9 @@ class Blade
     {
         return isset(static::instance()->partes[$name]);
     }
+    public static function preCoding($section, $code) {
+        static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', function(\$params) {?>" . $code . "<?php }); ?>";
+    }
     public static function partViewCall($name)
     {
         $rp = '';
@@ -156,13 +165,9 @@ class Blade
                 $rp .= $th->precompile();
                 return $rp;
             } elseif ($res['type'] == 'tablefy') {
-                //dd( serialize($res['params']));
-                //exit();
                 $tuq = 't' . uniqid();
-                static::instance()->html_prepend[] = "<?php \Core\Blade::partView('styles', function(\$params) {?>"
-                    . '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" /><?php }); ?>';
-                static::instance()->html_prepend[] = "<?php \Core\Blade::partView('scripts', function(\$params) {?>"
-                    . '<script>'
+                static::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
+                static::preCoding('scripts', '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
                     . 'var ' . $tuq . " = new Tablefy(<?= json_encode(array_merge(" . $res['params'] . ", [
                         'dom' => '#" . $tuq . "',
@@ -179,7 +184,7 @@ class Blade
                         'countSelectable' => 5,
                     ])) ?>).init(true);"
                     . "});"
-                    . '</script><?php }); ?>';
+                    . '</script>');
                 return '<table id="' . $tuq . '"></table>';
             }
         }, $html);
@@ -195,17 +200,13 @@ class Blade
 
         $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\,(\s*)[\'"](?<body>[\s\S]*?)(\s*)[\'"]\)/', function ($res) {
             static::instance()->sections[] = $res['name'];
-            static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $res['name'] . "', function(\$params) { extract(\$params); ?>"
-                . static::preCompileBasic($res['body'])
-                . '<?php }); ?>';
+            static::preCoding($res['name'], static::preCompileBasic($res['body']));
             return '';
         }, $html);
 
         $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\)(\s*)(?<body>[\s\S]*?)(\s*)@endsection/', function ($res) {
             static::instance()->sections[] = $res['name'];
-            static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $res['name'] . "', function(\$params) { extract(\$params); ?>"
-                . static::preCompileBasic($res['body'])
-                . '<?php }); ?>';
+            static::preCoding($res['name'], static::preCompileBasic($res['body']));
             return '';
         }, $html);
 
@@ -242,6 +243,20 @@ class Blade
             static::instance()->html_asset[] = $res['name'];
             return '';
         }, $html);
+
+        if(!empty(static::instance()->components)) {
+            $html = preg_replace_callback('/<nexus:([^\s>]+)([^>]*)>(.*?)<\/nexus:\1>/s', function ($res) {
+                $dom     = $res[1];
+                $attrs   = $res[2];
+                $content = $res[3];
+
+                if(isset(static::instance()->components[$dom])) {
+                    return 'DOM-CORRECTO';
+                } else {
+                    return 'DOM-NO-RECONOCIDO';
+                }
+            }, $html);
+        }
 
         return trim($html);
     }

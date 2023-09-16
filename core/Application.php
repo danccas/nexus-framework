@@ -3,6 +3,7 @@
 namespace Core;
 
 use Core\Kernel;
+use Core\Blade;
 use Core\Route;
 use Dotenv\Dotenv;
 use Core\DB;
@@ -44,6 +45,7 @@ class Application
         $this->registerAliasesAvailable();
         $this->registerDatabaseAvailable();
         $this->registerRoutesAvailable();
+        $this->registerComponentsNatives();
         return $this;
     }
     public function version()
@@ -99,6 +101,9 @@ class Application
                 }
             }
         }
+    }
+    public function registerComponentsNatives() {
+        Blade::component('tablefy', Core\View\Component\Tablefy::class);
     }
     public function registerConfiguresAvailable()
     {

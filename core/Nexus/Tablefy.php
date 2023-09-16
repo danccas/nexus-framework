@@ -1,12 +1,12 @@
 <?php
 
-namespace Core;
+namespace Core\Nexus;
 
 use Core\Concerns\Collection;
 
-class PaginationQuery
+class Tablefy
 {
-
+    protected $model   = null;
     private $action    = null;
     protected $query_a   = null;
     protected $query_b   = [];
@@ -41,15 +41,24 @@ class PaginationQuery
     public $link_prev    = null;
     public $link_next    = null;
 
-		public $actions      = [];
-		public $querys = [];
+    public $actions      = [];
+    public $querys = [];
 
-	  protected $_view = null;
+    protected $_view = null;
+
+    public function headers(): array {
+        return [
+            'Column 1',
+            'Column 2',
+            'Column 3',
+        ];
+    }
 
     public function query($q, $params = [])
     {
         $this->query_a = $q;
         $this->query_b = $params;
+        return $this;
     }
     private function sum_times($time1, $time2)
     {
@@ -212,7 +221,7 @@ class PaginationQuery
             GROUP BY dz." . $this->inputs['column'] . "
             ORDER BY 2 DESC, 1 ASC
 						LIMIT 50";
-										$this->querys[] = [$query, $this->query_b];
+                    $this->querys[] = [$query, $this->query_b];
                     $data = db()->collect($query, $this->query_b);
                     $box = !empty($ee) && is_callable($ee) ? $ee(new \stdClass, $this->inputs['column']) : null;
                     $valores = $data->toArray();
@@ -321,13 +330,13 @@ class PaginationQuery
         $queryCount = $this->queryAddFilters($queryCount);
 
         if (empty($this->countEstimate)) {
-					$cantidad = "SELECT count(*) total FROM (" . $queryCount . ")x";
-					$this->querys[] = [$cantidad, $this->query_b];
+            $cantidad = "SELECT count(*) total FROM (" . $queryCount . ")x";
+            $this->querys[] = [$cantidad, $this->query_b];
             $cantidad = db()->collect($cantidad, $this->query_b);
             $numero   = $cantidad->first()->total;
         } else {
-					$cantidad = "EXPLAIN (FORMAT JSON) " . $queryCount;
-					$this->querys[] = [$cantidad, $this->query_b];
+            $cantidad = "EXPLAIN (FORMAT JSON) " . $queryCount;
+            $this->querys[] = [$cantidad, $this->query_b];
             $cantidad = db()->collect($cantidad, $this->query_b);
             $log      = $cantidad->first()->{'QUERY PLAN'};
             $log      = json_decode($log);
@@ -351,8 +360,8 @@ class PaginationQuery
         LIMIT " . $this->per_page . " OFFSET " . $this->offset;
         }
 
-				$query = str_replace('--started', '', $query);
-				$this->querys[] = [$query, $this->query_b];
+        $query = str_replace('--started', '', $query);
+        $this->querys[] = [$query, $this->query_b];
         $data = db()->collect($query, $this->query_b);
         $this->time_count = $cantidad->execute->time;
         $this->time_query = $data->execute->time;
@@ -383,15 +392,17 @@ class PaginationQuery
             }
         }
 
-				$ce = &$this;
+        $ce = &$this;
 
-    if(!empty($this->_view)) {
-      $this->cbRow = function($n) use($ce) {
-        $html = $ce->_view->append(['row' => $n]);
-				$html = explode('@split', $html);
-				return array_map(function($n) { return trim($n); }, $html);
-      };
-    }
+        if (!empty($this->_view)) {
+            $this->cbRow = function ($n) use ($ce) {
+                $html = $ce->_view->append(['row' => $n]);
+                $html = explode('@split', $html);
+                return array_map(function ($n) {
+                    return trim($n);
+                }, $html);
+            };
+        }
 
         if (is_array($this->items)) {
             $this->items = array_map(function ($n) use (&$ce) {
@@ -486,8 +497,8 @@ class PaginationQuery
     }
     public function getRow($id)
     {
-			$query = str_replace('--row', '', $this->query_a);
-			$this->querys[] = [$query, $this->query_b + ['id' => $id]];
+        $query = str_replace('--row', '', $this->query_a);
+        $this->querys[] = [$query, $this->query_b + ['id' => $id]];
         $data = db()->collect($query, $this->query_b + [
             'id' => $id
         ]);
@@ -534,11 +545,12 @@ class PaginationQuery
             $this->events[$field][$event] = $cb;
         }
         return $this;
-		}
-  public function view($name, $params = []) {
-    $this->_view = (new Blade($name))->append($params);
-    return $this;
-  }
+    }
+    public function view($name, $params = [])
+    {
+        $this->_view = (new Blade($name))->append($params);
+        return $this;
+    }
 
     public function map($cb)
     {
@@ -564,8 +576,8 @@ class PaginationQuery
         $this->execute();
         return [
             'success' => true,
-						'result' => [
-//								'querys' => $this->querys,
+            'result' => [
+                //'querys' => $this->querys,
                 'total' => $this->total,
                 'per_page' => $this->per_page,
                 'offset' => $this->offset,

@@ -6,7 +6,7 @@ use Core\Concerns\Collection;
 use Core\DBCore;
 use Core\Database\Builder;
 use Core\Database\Raw;
-use Core\PaginationQuery;
+use Core\Nexus\Tablefy;
 
 class DB extends DBCore
 {
@@ -31,13 +31,13 @@ class DB extends DBCore
   }
   function tablefy($query, $params = [])
   {
-    $opo = new PaginationQuery;
+    $opo = new Tablefy;
     $opo->query($query, $params);
     return $opo;
   }
   function PaginationQuery($query, $params = [])
   {
-    $opo = new PaginationQuery;
+    $opo = new Tablefy;
     $opo->query($query, $params);
     return $opo;
   }
