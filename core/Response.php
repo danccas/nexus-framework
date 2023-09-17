@@ -81,7 +81,7 @@ class Response
 	}
 	public function booted()
 	{
-		$this->theme = new Blade();
+		$this->theme = Blade::instance();
 	}
 	public function blade()
 	{
