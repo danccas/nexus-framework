@@ -49,6 +49,10 @@ class Route
     {
         return $this->context;
     }
+    public function getController()
+    {
+        return $this->controller;
+    }
     public function firstName()
     {
         if (is_array($this->name)) {
@@ -231,7 +235,6 @@ class Route
     }
     public function isControllerValid()
     {
-        $this->controller = explode('@', $this->callback);
         if (!class_exists($this->controller[0])) {
             $this->controller[0] = "App\\Http\\Controllers\\" . $this->controller[0];
         }
@@ -306,7 +309,10 @@ class Route
     }
     private function injectionController($reflections, $request, $response)
     {
-        $control = new $this->controller[0];
+      $control = new $this->controller[0];
+      if(method_exists($control, 'setRoute')) {
+        $control->setRoute($this);
+      }
         if (!empty($this->request_params)) {
             $params = $this->request_params;
         } else {
@@ -360,8 +366,8 @@ class Route
         }
         if ($this->isControllerFormat()) {
             if ($this->isControllerValid()) {
-                $reflection = $this->reflectionController();
-                $rp = $this->injectionController($reflection, $request, $response);
+              $reflection = $this->reflectionController();
+              $rp = $this->injectionController($reflection, $request, $response);
                 $this->terminate();
                 return $rp;
             } else {
@@ -417,8 +423,9 @@ class Route
     }
     public function setController($controller)
     {
-        $this->callback = $controller;
-        return $this;
+      $this->callback = $controller;
+      $this->controller = explode('@', $this->callback);
+      return $this;
     }
 
     public function middleware($cb)

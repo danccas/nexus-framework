@@ -188,7 +188,7 @@ class Kernel
             }
         }
         if (!$is_match) {
-            if (isset($_GET['ddebug'])) {
+            if (isset($_GET['ddebug']) || true) {
                 echo $this->debug();
                 exit;
             } else {

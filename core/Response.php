@@ -89,8 +89,8 @@ class Response
 	}
 	public function load($data)
 	{
-		if ($data instanceof Response) {
-			return $this->migrate($data);
+    if ($data instanceof Response) {
+			return $this;#->migrate($data);
 		}
 		$this->data = $data;
 		return $this;
@@ -176,11 +176,9 @@ class Response
 	}
 	public function migrate($res)
 	{
-		echo "<migrate>";
 		$this->format = $res->format;
 		$this->data = $res->data;
 		$this->theme = $res->theme;
-		$this->_ajax = $res->_ajax;
 		return $this;
 	}
 	public function getData()

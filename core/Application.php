@@ -103,7 +103,7 @@ class Application
         }
     }
     public function registerComponentsNatives() {
-        Blade::component('tablefy', Core\View\Component\Tablefy::class);
+        Blade::component('tablefy', \Core\View\Components\Tablefy::class);
     }
     public function registerConfiguresAvailable()
     {

@@ -251,9 +251,23 @@ class Blade
                 $content = $res[3];
 
                 if(isset(static::instance()->components[$dom])) {
-                    return 'DOM-CORRECTO';
+                  $subClass = static::instance()->components[$dom];
+                  if(!class_exists($subClass, true)) {
+                    kernel()->exception('Component Class no exists: ' . $subClass);
+                  }
+                  $subClass = new $subClass;
+                  preg_match_all('/\s+([^=]+)="([^"]*)"/', $attrs, $attrMatches, PREG_SET_ORDER);
+                  foreach ($attrMatches as $attrMatch) {
+                    if(strpos($attrMatch[1], ':') === 0) {
+                      $attr = trim($attrMatch[1], ':');
+                      $subClass->setInt($attr, $attrMatch[2]);
+                    } else {
+                      $subClass->setAttr($attrMatch[1], $attrMatch[2]);
+                    }
+                  }
+                  return $subClass;
                 } else {
-                    return 'DOM-NO-RECONOCIDO';
+                    return '<!-- DOM-NO-RECONOCIDO -->';
                 }
             }, $html);
         }

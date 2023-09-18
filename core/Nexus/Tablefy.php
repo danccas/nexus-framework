@@ -3,15 +3,18 @@
 namespace Core\Nexus;
 
 use Core\Concerns\Collection;
+use Core\Nexus\Header;
 
-class Tablefy
+class Tablefy implements \JsonSerializable
 {
-    protected $model   = null;
-    private $action    = null;
+  public $directRoute = null;
+
+  protected $listHeaders = [];
+  private $action    = null;
     protected $query_a   = null;
     protected $query_b   = [];
     public $total      = null;
-    public $per_page   = 50;
+    protected $paginate   = 50;
     public $offset     = 0;
     public $last_page  = 0;
     public $items      = [];
@@ -25,7 +28,7 @@ class Tablefy
     private $countEstimate = false;
     public $is_estimate = false;
     public $sublimit   = false;
-    private $classHydrate = null;
+    protected $model = null;
     private $cbRow = null;
     private $events = [];
     private $executed = false;
@@ -42,18 +45,31 @@ class Tablefy
     public $link_next    = null;
 
     public $actions      = [];
+    public $actions_group = [];
     public $querys = [];
 
     protected $_view = null;
 
-    public function headers(): array {
-        return [
-            'Column 1',
-            'Column 2',
-            'Column 3',
-        ];
-    }
 
+    public function __construct() {
+      if(method_exists($this, 'row')) {
+        $ce = $this;
+        $this->map(function($n) use(&$ce) {
+          return $ce->row($n);
+        });
+      }
+      $this->prepare();
+    }
+    public function getHeaders() {
+      return $this->listHeaders;
+    }
+    public function setRoute($route) {
+      $this->directRoute = $route;
+      return $this;
+    }
+    public function route() {
+      return $this->directRoute;
+    }
     public function query($q, $params = [])
     {
         $this->query_a = $q;
@@ -85,7 +101,7 @@ class Tablefy
     }
     public function hydrate($cName)
     {
-        $this->classHydrate = $cName;
+        $this->model = $cName;
         return $this;
     }
     public function formatPage($text)
@@ -99,10 +115,10 @@ class Tablefy
     }
     private function generatePages()
     {
-        if (!($this->per_page > 0)) {
+        if (!($this->paginate > 0)) {
             //      return false;
         }
-        $this->last_page = ceil($this->total / $this->per_page);
+        $this->last_page = ceil($this->total / $this->paginate);
         if ($this->page < $this->last_page) {
             $this->page_next = $this->page + 1;
             $this->link_next = $this->generateLink($this->link_format, $this->page + 1);
@@ -122,8 +138,8 @@ class Tablefy
         } else {
             $this->action = $input['action'];
         }
-        if (isset($input['per_page'])) {
-            $this->per_page = (int) $input['per_page'];
+        if (isset($input['paginate'])) {
+            $this->paginate = (int) $input['paginate'];
         }
         if (isset($input['page'])) {
             $this->page = (int) $input['page'];
@@ -144,13 +160,13 @@ class Tablefy
     }
     private function eventColumnDefault($event, $column)
     {
-        if (empty($this->classHydrate)) {
+        if (empty($this->model)) {
             return false;
         }
         if (isset($this->events[$column][$event])) {
             return false;
         }
-        $ccname = $this->classHydrate;
+        $ccname = $this->model;
         if (!in_array($column, array_keys((new $ccname)->getCasts()))) {
             return false;
         }
@@ -196,23 +212,77 @@ class Tablefy
         }
         return $this->events[$column][$event];
     }
+    private function prepare() {
+      $this->prepareColumns();
+      if(method_exists($this, 'actionsByRow')) {
+        $this->actions = $this->actionsByRow();
+        if(!empty($this->actions)) {
+          foreach($this->actions as $key => $f) {
+            $f->setIndex('row' . $key)->prepare($this);
+          }
+        }
+      }
+      if(method_exists($this, 'bulkActions')) {
+        $this->actions_group = $this->bulkActions();
+        if(!empty($this->actions_group)) {
+          foreach($this->actions_group as $key => $f) {
+            $f->setIndex('group' . $key)->prepare($this);
+          }
+        }
+      }
+    }
+    private function prepareColumns() {
+      if(method_exists($this, 'headers')) {
+        $this->listHeaders = $this->headers();
+        if(is_array($this->listHeaders)) {
+          $this->listHeaders = array_map(function($h) {
+            return is_string($h) ? new Header($h) : $h;
+          }, $this->listHeaders);
+        }
+      }
+    }
     private function execute()
     {
         if ($this->executed) {
             return $this;
         }
         $this->executed = true;
+        $this->prepare();
         if (!$this->is_appends) {
             $this->appends([]);
         }
-        if (!empty($this->classHydrate)) {
-            $name = $this->classHydrate;
+        if (!empty($this->model)) {
+            $name = $this->model;
             $this->fillable_columns = (new $name)->getFillable();
             if (method_exists($name, 'tablefy')) {
                 $name::tablefy($this);
             }
         }
-        if ($this->action == 'distinct') {
+        if ($this->action == 'click') {
+          if(!empty($this->actions)) {
+            foreach($this->actions as $key => $f) {
+              if($this->inputs['option'] == $f->uid()) {
+                $rp = ($this->model)::find($this->inputs['ids']);
+                if(empty($rp)) {
+                  abort(404);
+                }
+                if(method_exists($f, 'handle')) {
+                  $rp = $f->handle($rp);
+                  return [
+                    'success' => true,
+                    'result'    => $rp
+                  ];
+                }
+                return [
+                  'success' => false,
+                  'message' => 'no actions',
+                ];
+              }
+            }
+          }
+          abort(404);
+
+        } elseif ($this->action == 'distinct') {
             if (!empty($this->inputs['column'])) {
                 if (($ee = $this->eventColumn('edit', $this->inputs['column'])) || true) {
                     $query = $this->queryAddFilters($this->query_a, $this->inputs['column']);
@@ -252,8 +322,8 @@ class Tablefy
         } else if ($this->action == 'edit') {
             if (!empty($this->inputs['column'])) {
                 if ($ee = $this->eventColumn($this->action, $this->inputs['column'])) {
-                    if (!empty($this->classHydrate)) {
-                        $name = $this->classHydrate;
+                    if (!empty($this->model)) {
+                        $name = $this->model;
                         $row = $name::find($this->inputs['id']);
                         if (method_exists($row, '__validData')) {
                             $row->__validData();
@@ -285,8 +355,8 @@ class Tablefy
                     if ($this->hasRow()) {
                         $row = $this->getRow($this->inputs['id']);
                     } else {
-                        if (!empty($this->classHydrate)) {
-                            $name = $this->classHydrate;
+                        if (!empty($this->model)) {
+                            $name = $this->model;
                             $row = $name::find($this->inputs['id']);
                         } else {
                             $row = $this->inputs['id'];
@@ -343,21 +413,21 @@ class Tablefy
             $numero   = ($log[0]->Plan->{'Plan Rows'});
         }
 
-        $this->offset = (($this->page - 1) * $this->per_page);
+        $this->offset = (($this->page - 1) * $this->paginate);
 
         $query = $this->queryAddFilters($this->query_a);
 
         if (strpos($query, '--pagination') !== FALSE) { #&& empty($this->filters)) {
             $query = str_replace(
                 '--pagination',
-                " LIMIT " . $this->per_page . " OFFSET " . $this->offset,
+                " LIMIT " . $this->paginate . " OFFSET " . $this->offset,
                 $query
             );
             $this->sublimit = true;
         } else {
             $query = "
         SELECT * FROM (" . $query . ")x
-        LIMIT " . $this->per_page . " OFFSET " . $this->offset;
+        LIMIT " . $this->paginate . " OFFSET " . $this->offset;
         }
 
         $query = str_replace('--started', '', $query);
@@ -367,8 +437,8 @@ class Tablefy
         $this->time_query = $data->execute->time;
         $this->time_total = $this->sum_times($this->time_count, $this->time_query);
 
-        if (!empty($this->classHydrate)) {
-            $name = $this->classHydrate;
+        if (!empty($this->model)) {
+            $name = $this->model;
             $this->items = $name::hydrate($data->all());
             $this->items->map(function ($n) {
                 if (method_exists($n, '__validData')) {
@@ -405,7 +475,7 @@ class Tablefy
         }
 
         if (is_array($this->items)) {
-            $this->items = array_map(function ($n) use (&$ce) {
+          $this->items = array_map(function ($n) use (&$ce) {
                 if (!empty($ce->cbRow)) {
                     $n->_map = ($ce->cbRow)($n);
                     $ce->order_columns = array_keys($n->_map);
@@ -415,12 +485,12 @@ class Tablefy
                 return $n;
             }, $this->items);
         } else {
-            $this->items->map(function ($n) use (&$ce) {
+          $this->items->map(function ($n) use (&$ce) {
                 if (!empty($ce->cbRow)) {
                     $n->_map = ($ce->cbRow)($n);
                     $ce->order_columns = array_keys((array) $n->_map);
                 } else {
-                    $ce->order_columns = array_keys((array) $n);
+                    $ce->order_columns = array_keys($n->toArray());
                 }
                 return $n;
             });
@@ -428,7 +498,7 @@ class Tablefy
 
         $this->total = $numero;
         $this->is_estimate = $this->countEstimate;
-        if ($this->countEstimate && count($this->items) < $this->per_page) {
+        if ($this->countEstimate && count($this->items) < $this->paginate) {
             $this->is_estimate = false;
             $this->total       = count($this->items);
         }
@@ -506,8 +576,8 @@ class Tablefy
         $this->time_query = $data->execute->time;
         $this->time_total = $data->execute->time;
 
-        if (!empty($this->classHydrate)) {
-            $name = $this->classHydrate;
+        if (!empty($this->model)) {
+            $name = $this->model;
             $data = $name::hydrate($data->all());
             $data->map(function ($n) {
                 $n->__validData();
@@ -568,18 +638,18 @@ class Tablefy
     }
     public function get()
     {
-        $this->execute();
+        return $this->execute();
         return $this->toArray(); ##$this;
     }
     public function toArray()
     {
         $this->execute();
-        return [
+        $response = [
             'success' => true,
             'result' => [
                 //'querys' => $this->querys,
                 'total' => $this->total,
-                'per_page' => $this->per_page,
+                'per_page' => $this->paginate,
                 'offset' => $this->offset,
                 'last_page' => $this->last_page,
                 'page' => $this->page,
@@ -590,13 +660,30 @@ class Tablefy
                 'time_total' => $this->time_total,
                 'is_estimate' => $this->is_estimate,
                 'executed' => $this->executed,
+#                'columns'  => $this->listHeaders,
                 'modifiable_columns' => $this->modifiable_columns,
-                'order_columns' => $this->order_columns,
+//                'order_columns' => $this->order_columns,
                 'page_prev' => $this->page_prev,
                 'page_next' => $this->page_next,
                 'actions' => $this->actions,
+                'actions_group' => $this->actions_group,
                 'items' => !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [],
             ]
         ];
+        if(!empty($this->listHeaders)) {
+          $response['result']['order_columns'] = $this->listHeaders;
+        }
+        return $response;
+    }
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize() {
+      return $this->toArray();
+    }
+    public function response() {
+      $this->repository();
+      $response = $this
+        ->appends(request()->input())
+        ->get();
+      return response()->json($response);
     }
 }
