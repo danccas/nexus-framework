@@ -4,13 +4,14 @@ namespace Core\Nexus;
 
 use Core\Concerns\Collection;
 use Core\Nexus\Header;
+use Core\Blade;
 
 class Tablefy implements \JsonSerializable
 {
-  public $directRoute = null;
+    public $directRoute = null;
 
-  protected $listHeaders = [];
-  private $action    = null;
+    protected $listHeaders = [];
+    private $action    = null;
     protected $query_a   = null;
     protected $query_b   = [];
     public $total      = null;
@@ -51,24 +52,28 @@ class Tablefy implements \JsonSerializable
     protected $_view = null;
 
 
-    public function __construct() {
-      if(method_exists($this, 'row')) {
-        $ce = $this;
-        $this->map(function($n) use(&$ce) {
-          return $ce->row($n);
-        });
-      }
-      $this->prepare();
+    public function __construct()
+    {
+        if (method_exists($this, 'row')) {
+            $ce = $this;
+            $this->map(function ($n) use (&$ce) {
+                return $ce->row($n);
+            });
+        }
+        $this->prepare();
     }
-    public function getHeaders() {
-      return $this->listHeaders;
+    public function getHeaders()
+    {
+        return $this->listHeaders;
     }
-    public function setRoute($route) {
-      $this->directRoute = $route;
-      return $this;
+    public function setRoute($route)
+    {
+        $this->directRoute = $route;
+        return $this;
     }
-    public function route() {
-      return $this->directRoute;
+    public function route()
+    {
+        return $this->directRoute;
     }
     public function query($q, $params = [])
     {
@@ -212,34 +217,36 @@ class Tablefy implements \JsonSerializable
         }
         return $this->events[$column][$event];
     }
-    private function prepare() {
-      $this->prepareColumns();
-      if(method_exists($this, 'actionsByRow')) {
-        $this->actions = $this->actionsByRow();
-        if(!empty($this->actions)) {
-          foreach($this->actions as $key => $f) {
-            $f->setIndex('row' . $key)->prepare($this);
-          }
+    private function prepare()
+    {
+        $this->prepareColumns();
+        if (method_exists($this, 'actionsByRow')) {
+            $this->actions = $this->actionsByRow();
+            if (!empty($this->actions)) {
+                foreach ($this->actions as $key => $f) {
+                    $f->setIndex('row' . $key)->prepare($this);
+                }
+            }
         }
-      }
-      if(method_exists($this, 'bulkActions')) {
-        $this->actions_group = $this->bulkActions();
-        if(!empty($this->actions_group)) {
-          foreach($this->actions_group as $key => $f) {
-            $f->setIndex('group' . $key)->prepare($this);
-          }
+        if (method_exists($this, 'bulkActions')) {
+            $this->actions_group = $this->bulkActions();
+            if (!empty($this->actions_group)) {
+                foreach ($this->actions_group as $key => $f) {
+                    $f->setIndex('group' . $key)->prepare($this);
+                }
+            }
         }
-      }
     }
-    private function prepareColumns() {
-      if(method_exists($this, 'headers')) {
-        $this->listHeaders = $this->headers();
-        if(is_array($this->listHeaders)) {
-          $this->listHeaders = array_map(function($h) {
-            return is_string($h) ? new Header($h) : $h;
-          }, $this->listHeaders);
+    private function prepareColumns()
+    {
+        if (method_exists($this, 'headers')) {
+            $this->listHeaders = $this->headers();
+            if (is_array($this->listHeaders)) {
+                $this->listHeaders = array_map(function ($h) {
+                    return is_string($h) ? new Header($h) : $h;
+                }, $this->listHeaders);
+            }
         }
-      }
     }
     private function execute()
     {
@@ -259,29 +266,28 @@ class Tablefy implements \JsonSerializable
             }
         }
         if ($this->action == 'click') {
-          if(!empty($this->actions)) {
-            foreach($this->actions as $key => $f) {
-              if($this->inputs['option'] == $f->uid()) {
-                $rp = ($this->model)::find($this->inputs['ids']);
-                if(empty($rp)) {
-                  abort(404);
+            if (!empty($this->actions)) {
+                foreach ($this->actions as $key => $f) {
+                    if ($this->inputs['option'] == $f->uid()) {
+                        $rp = ($this->model)::find($this->inputs['ids']);
+                        if (empty($rp)) {
+                            abort(404);
+                        }
+                        if (method_exists($f, 'handle')) {
+                            $rp = $f->handle($rp);
+                            return [
+                                'success' => true,
+                                'result'    => $rp
+                            ];
+                        }
+                        return [
+                            'success' => false,
+                            'message' => 'no actions',
+                        ];
+                    }
                 }
-                if(method_exists($f, 'handle')) {
-                  $rp = $f->handle($rp);
-                  return [
-                    'success' => true,
-                    'result'    => $rp
-                  ];
-                }
-                return [
-                  'success' => false,
-                  'message' => 'no actions',
-                ];
-              }
             }
-          }
-          abort(404);
-
+            abort(404);
         } elseif ($this->action == 'distinct') {
             if (!empty($this->inputs['column'])) {
                 if (($ee = $this->eventColumn('edit', $this->inputs['column'])) || true) {
@@ -475,7 +481,7 @@ class Tablefy implements \JsonSerializable
         }
 
         if (is_array($this->items)) {
-          $this->items = array_map(function ($n) use (&$ce) {
+            $this->items = array_map(function ($n) use (&$ce) {
                 if (!empty($ce->cbRow)) {
                     $n->_map = ($ce->cbRow)($n);
                     $ce->order_columns = array_keys($n->_map);
@@ -485,7 +491,7 @@ class Tablefy implements \JsonSerializable
                 return $n;
             }, $this->items);
         } else {
-          $this->items->map(function ($n) use (&$ce) {
+            $this->items->map(function ($n) use (&$ce) {
                 if (!empty($ce->cbRow)) {
                     $n->_map = ($ce->cbRow)($n);
                     $ce->order_columns = array_keys((array) $n->_map);
@@ -660,9 +666,9 @@ class Tablefy implements \JsonSerializable
                 'time_total' => $this->time_total,
                 'is_estimate' => $this->is_estimate,
                 'executed' => $this->executed,
-#                'columns'  => $this->listHeaders,
+                #                'columns'  => $this->listHeaders,
                 'modifiable_columns' => $this->modifiable_columns,
-//                'order_columns' => $this->order_columns,
+                //                'order_columns' => $this->order_columns,
                 'page_prev' => $this->page_prev,
                 'page_next' => $this->page_next,
                 'actions' => $this->actions,
@@ -670,20 +676,22 @@ class Tablefy implements \JsonSerializable
                 'items' => !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [],
             ]
         ];
-        if(!empty($this->listHeaders)) {
-          $response['result']['order_columns'] = $this->listHeaders;
+        if (!empty($this->listHeaders)) {
+            $response['result']['order_columns'] = $this->listHeaders;
         }
         return $response;
     }
     #[\ReturnTypeWillChange]
-    public function jsonSerialize() {
-      return $this->toArray();
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
-    public function response() {
-      $this->repository();
-      $response = $this
-        ->appends(request()->input())
-        ->get();
-      return response()->json($response);
+    public function response()
+    {
+        $this->repository();
+        $response = $this
+            ->appends(request()->input())
+            ->get();
+        return response()->json($response);
     }
 }

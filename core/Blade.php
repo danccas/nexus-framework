@@ -103,7 +103,7 @@ class Blade
         return isset(static::instance()->partes[$name]);
     }
     public static function preCoding($section, $code) {
-        static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', function(\$params) {?>" . $code . "<?php }); ?>";
+        static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', function(\$params) { extract(\$params); ?>" . $code . "<?php }); ?>";
     }
     public static function partViewCall($name)
     {
