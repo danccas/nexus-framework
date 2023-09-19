@@ -22,14 +22,41 @@ class Component {
     return $this;
   }
   public function setAttr($name, $value) {
-    $this->attrs[$name] = $value;
+    if(strpos($name, ':json') !== false) {
+      $this->attrs[$name] = $value;
+      $value = static::fixJSON($value);
+      $value = preg_replace('/(\w+):/i', '"\1":', $value);
+      $this->attrs[str_replace(':json', '', $name)] = json_decode($value, true);
+    } else {
+      $this->attrs[$name] = $value;
+    }
     return $this;
   }
   public function attr($name) {
     return $this->attrs[$name];
   }
+  public function attrs() {
+    return $this->attrs;
+  }
   public function setDom($name) {
     $this->dom = $name;
     return $this;
   }
+  private static function fixJSON($json) {
+        $newJSON = '';
+
+        $jsonLength = strlen($json);
+        for ($i = 0; $i < $jsonLength; $i++) {
+            if ($json[$i] == '"' || $json[$i] == "'") {
+                $nextQuote = strpos($json, $json[$i], $i + 1);
+                $quoteContent = substr($json, $i + 1, $nextQuote - $i - 1);
+                $newJSON .= '"' . str_replace('"', "'", $quoteContent) . '"';
+                $i = $nextQuote;
+            } else {
+                $newJSON .= $json[$i];
+            }
+        }
+
+        return $newJSON;
+    }
 }

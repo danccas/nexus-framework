@@ -54,7 +54,6 @@ class Tablefy extends Component {
         $this->model->setRoute($route);
         $headers = $this->model->getHeaders();
       }
-
       $tuq = 't' . uniqid();
       $params = [
         'dom' => '#' . $tuq,
@@ -73,7 +72,10 @@ class Tablefy extends Component {
       if(!empty($headers)) {
         $params['headers'] = $headers;
       }
-
+      $params = array_filter($params);
+      foreach($this->attrs() as $key => $val) {
+        $params[$key] = $val;
+      }
       Blade::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
       Blade::preCoding('scripts', '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
