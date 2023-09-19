@@ -711,7 +711,7 @@ class FormityField
       $class[] = 'input';
     }
 
-    if (in_array($this->type, ['input', 'textarea', 'select'])) {
+    if (in_array($this->type, ['input', 'textarea', 'select', 'boolean','number','decimal'])) {
       $class[] = 'form-control';
     } else {
       $class[] = $this->type;
@@ -752,7 +752,7 @@ class FormityField
         $h .= '<input type="hidden" name="' . $keyw . '" id="val_' . $this->getNameRequest() . '" value="' . htmlentities($this->getValue()) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
         $h .= '<input type="' . $this->type . '" id="ip_' . $this->getNameRequest() . '" value="' . htmlentities($this->getLabel()) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
       } else {
-        $h .= '<textarea name="' . $keyw . '" id="ip_' . $this->getNameRequest() . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '">' . htmlentities($this->value) . '</textarea>';
+        $h .= '<textarea name="' . $keyw . '" id="ip_' . $this->getNameRequest() . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '">' . @htmlentities($this->value) . '</textarea>';
       }
 			$h .= "<script> require('/assets/js/jquery-ui.min.js', function() { console.log('CARGADO DE AUTOCOMPLETE'); $('#ip_" . $this->getNameRequest() . "').autocomplete({ source: function (request, response) { \n";
 			$uri = $this->mform->url->query('aip', $this->getNameRequest())->link();

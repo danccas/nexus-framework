@@ -11,7 +11,7 @@ class Formity
   public static $INPUT_EMAIL = 'email';
   public static $INPUT_DOMAIN = 'domain';
 
-  private static $instances = NULL;
+  private static $instances = [];
   private $nToken = '_token';
 
   public $mform = null;
@@ -492,6 +492,9 @@ class Formity
   }
   function begin($attrs = [])
   {
+    if(empty($this->url)) {
+      $this->url = route()->current();
+    }
     return $this->buildHeader('POST', $this->url, $attrs);
 	}
 	function attr($key, $value) {
@@ -558,7 +561,7 @@ class Formity
     $rp = '';
     $par = $nivel % 2 === 0;
     if ($nivel == 0) {
-      $rp .= $form->buildHeader();
+      $rp .= $form->begin();
       /* if(ES_POPY) {
         $rp .= '<div style="margin-top: 15px;text-align: right;font-size: 12px;">';
         $rp .= $form->message;
@@ -581,11 +584,12 @@ class Formity
         if ($field->extra == 'hidden') {
           $rp .= '<div style="display:none;">';
           $rp .= $field->render() . "\n";
+          $rp .= '</div>';
         } else {
           #          $rp .= '<div class="column is-' . $field->size . '">';
-          $rp .= '<div class="flex flex-col sm:flex-row items-center mt-3">';
-          $rp .= '<label class="w-full sm:w-20 sm:text-right sm:mr-5">' . $field->name . "</label>\n";
-          $rp .= '<div class="w-full">';
+          $rp .= '<div class="form-group">';
+          $rp .= '<label class="form-label">' . $field->name . "</label>\n";
+          $rp .= '<div>';
           $rp .= $field->render() . "\n";
           $rp .= '</div>';
         }
@@ -609,7 +613,7 @@ class Formity
       $rp .= '<div class="column is-12" style="margin-top: 15px;text-align: right;font-size: 12px;">';
       $rp .= $form->buildButtons();
       $rp .= '</div>';
-      $rp .= $form->buildFooter();
+      $rp .= $form->end();
     }
     $rp .= '</div>';
     #    $rp .= '</div>';
@@ -636,24 +640,5 @@ class Formity
     $rp .= static::_renderFormity($this);
     $rp .= '</div>';
     return $rp;
-  }
-  function renderInPage()
-  {
-    $rp = "<div class=\"card\">";
-    if (!is_null($this->title)) {
-      $rp .= "<div class=\"card-header\">";
-      $rp .= "<p class=\"card-header-title\">";
-      $rp .= $this->title;
-      $rp .= "</p>";
-      $rp .= "</div>";
-    }
-    $rp .= "<div class=\"card-body\">";
-    $rp .= "<div class=\"card-content\">";
-    $rp .= static::_renderFormity($this);
-    $rp .= '</div></div></div>';
-    $VISTA_HTML = $rp;
-    unset($rp);
-    require_once(app()->attr('views') . 'site/internal.php');
-    exit;
   }
 }
