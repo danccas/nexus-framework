@@ -11,27 +11,12 @@ class Formity
   public static $INPUT_EMAIL = 'email';
   public static $INPUT_DOMAIN = 'domain';
 
-  private static $instances = [];
+  private static $instances = null;
   private $nToken = '_token';
 
   public $mform = null;
 
-  public static function getInstance($cdr = null)
-  {
-
-    if (!is_null($cdr) && !array_key_exists($cdr, static::$instances)) {
-      $rp = static::$instances[$cdr] = new static($cdr);
-    } elseif (is_null($cdr)) {
-      if (empty(static::$instances)) {
-        trigger_error('Sin instancias');
-      } else {
-        $rp = reset(static::$instances);
-      }
-    } else {
-      $rp = static::$instances[$cdr];
-    }
-    return $rp;
-  }
+  
   public static function exists($cdr)
   {
     return array_key_exists($cdr, static::$instances);
@@ -46,6 +31,10 @@ class Formity
     return static::$instances;
   }
   public static function g($cdr = null)
+  {
+    
+  }
+  public static function getInstance($cdr = null)
   {
     return static::instance($cdr);
   }
