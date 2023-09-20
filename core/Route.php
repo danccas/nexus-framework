@@ -425,6 +425,15 @@ class Route
     {
       $this->callback = $controller;
       $this->controller = explode('@', $this->callback);
+      $cc = $this->controller[0];
+      if(!empty($cc)) {
+        if(!class_exists($cc)) {
+          $cc = 'App\\Http\\Controllers\\' . $cc;
+          if(class_exists($cc)) {
+            $this->controller[0] = $cc;
+          }
+        }
+      }
       return $this;
     }
 
