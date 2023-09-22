@@ -356,7 +356,7 @@ $htmlStyles = '<script type="text/javascript" src="{{ asset(\'assets/libs/requir
 $htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery/jquery.min.js\') }}"></script>
 <script type="text/javascript" src="{{ asset(\'assets/libs/popup/popup.min.js\') }}"></script>';
         $html = str_replace('@NexusStyles', $htmlStyles, $html);
-        $html = str_replace('@NexusScrips', $htmlScrips, $html);
+        $html = str_replace('@NexusScripts', $htmlScrips, $html);
 
 				$html = str_replace("{{--", "<!--", $html);
         $html = str_replace("--}}", "-->", $html);
