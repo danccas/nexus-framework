@@ -349,7 +349,16 @@ class Blade
     {
 
         $html = $this->precompile();
-        $html = str_replace("{{--", "<!--", $html);
+
+$htmlStyles = '<script type="text/javascript" src="{{ asset(\'assets/libs/require/require.min.js\') }}"></script>
+<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" type="text/css" />
+<link href="{{ asset(\'assets/libs/bootstrap/bootstrap.min.css\') }}" rel="stylesheet" type="text/css" />';
+$htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery/jquery.min.js\') }}"></script>
+<script type="text/javascript" src="{{ asset(\'assets/libs/popup/popup.min.js\') }}"></script>';
+        $html = str_replace('@NexusStyles', $htmlStyles, $html);
+        $html = str_replace('@NexusScrips', $htmlScrips, $html);
+
+				$html = str_replace("{{--", "<!--", $html);
         $html = str_replace("--}}", "-->", $html);
         $html = str_replace('{{', '<?=', $html);
         $html = str_replace('}}', '?>', $html);
@@ -361,7 +370,7 @@ class Blade
         $html = str_replace('@php', '<?php', $html);
         $html = str_replace('@endphp', '?>', $html);
         $html = str_replace('@else', '<?php } else { ?>', $html);
-        $html = str_replace('@endif', '<?php } ?>', $html);
+				$html = str_replace('@endif', '<?php } ?>', $html);
 
         file_put_contents($this->fileCached, $html);
         return $this->html();
