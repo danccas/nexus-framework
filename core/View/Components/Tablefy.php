@@ -7,6 +7,7 @@ use Core\Nexus\Tablefy as TablefyCore;
 
 class Tablefy extends Component {
 
+  protected $uniq  = null;
   protected $model = null;
   protected $route = null;
   protected $enumerate = false;
@@ -26,8 +27,11 @@ class Tablefy extends Component {
         //
     }
 
-    public function mount($attrs) {
-      $this->message = $attrs;
+    public function mount() {
+      $this->uniq = 'tt' . uniqid();
+      \Core\Blade::partView('styles', function($params) {
+        echo '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />';
+      });
     }
 
     /**
@@ -37,7 +41,12 @@ class Tablefy extends Component {
      */
     public function render()
     {
-      $route = route($this->route);
+
+      if(!($this->route instanceof Route)) {
+        $route = route($this->route);
+      } else {
+        $route = $this->route;
+      }
       if(!($route instanceof Route)) {
         kernel()->exception('<nexus:tablefy> require a valid route.');
       }
@@ -54,9 +63,8 @@ class Tablefy extends Component {
         $this->model->setRoute($route);
         $headers = $this->model->getHeaders();
       }
-      $tuq = 't' . uniqid();
       $params = [
-        'dom' => '#' . $tuq,
+        'dom' => '#' . $this->uniq,
         'request' => [
           'url' => $route->link(),
           'type' => 'POST',
@@ -76,12 +84,11 @@ class Tablefy extends Component {
       foreach($this->attrs() as $key => $val) {
         $params[$key] = $val;
       }
-      Blade::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
-      Blade::preCoding('scripts', '<script>'
+      return '<table id="' . $this->uniq . '"></table>'.
+        '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
-                    . 'var ' . $tuq . " = new Tablefy(" . json_encode($params) . ').init(true);'
+                    . 'var ' . $this->uniq . " = new Tablefy(" . json_encode($params) . ').init(true);'
                     . "});"
-                    . '</script>');
-      return '<table id="' . $tuq . '"></table>' . $this->message;
+                    . '</script>';
     }
 }

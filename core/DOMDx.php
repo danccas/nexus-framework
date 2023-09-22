@@ -2,6 +2,7 @@
 namespace Core;
 
 use Core\Concerns\Collection;
+use Core\Model;
 
 class DOMDx {
     protected $elem;
@@ -38,6 +39,8 @@ class DOMDx {
 			if($data instanceof Collection) {
 				$this->data = $data;
         $this->mfooter = date('d/m/Y h:i:s A', $data->execute->unix);
+      } elseif($data instanceof Model) {
+        $this->data = $data->getAttributes();
       } else {
 				$this->data = $data;
 			}
@@ -84,6 +87,37 @@ class DOMDx {
         $this->buildfooter();
         return $this;
     }
+    public function tableV($datax = -1) {
+      if($datax instanceof Collection) {
+        $this->set($datax);
+        $this->mfooter = date('d/m/Y h:i:s A', $datax->execute->unix);
+        $datax = -1;
+      }
+      if($datax == -1) {
+            $datax = $this->data;
+      }
+        $this->buildheader();
+        $div = $this->createElementRoot('div');
+        $table = $this->createElement('table');
+        $table->setAttribute('style', 'width: 100%;');
+        $div->appendChild($table);
+        if(empty($datax)) {
+            return $this;
+        }
+//        dd($datax);
+        $tbody = $this->createElement('tbody');
+        foreach($datax as $key => $val) {
+            $tr = $this->createElement('tr');
+            $th = $this->createElement('th', strtoupper($key));
+            $tr->appendChild($th);
+            $td = $this->createElement('td', $val);
+            $tr->appendChild($td);
+            $tbody->appendChild($tr);
+        }
+        $table->appendChild($tbody);
+        $this->buildfooter();
+        return $this;
+    }
     public function footer($message) {
         $this->mfooter = $message;
         if(!empty($this->root)) {
@@ -117,10 +151,12 @@ class DOMDx {
         return $this;
     }
     public function createElementRoot($a, $b = '') {
+      $b = is_null($b) ? '' : $b;
         $this->root = $this->elem->createElement($a, $b);
         return $this->root;
     }
     public function createElement($a, $b = '') {
+      $b = is_null($b) ? '' : $b;
         return $this->elem->createElement($a, $b);
     }
     public function appendChild($a) {

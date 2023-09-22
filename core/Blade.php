@@ -22,9 +22,11 @@ class Blade
     protected $sections = [];
     protected $html_asset = [];
     protected $html_prepend = [];
+    protected $html_prepend_end = false;
     protected $html_after   = [];
     protected $is_load = false;
 
+    public static $params = [];
     public static function instance($view_name = null)
     {
         if (null === static::$instance) {
@@ -91,6 +93,10 @@ class Blade
     {
         return $this->id;
     }
+    public static function partComponent($component, $attributes) {
+      $component->setAttributes($attributes);
+      echo $component->render();
+    }
     public static function partView($name, $callback)
     {
         if (!isset(static::instance()->partes[$name])) {
@@ -103,7 +109,11 @@ class Blade
         return isset(static::instance()->partes[$name]);
     }
     public static function preCoding($section, $code) {
+      if(is_null($section)) {
+        static::instance()->html_prepend[] = $code;
+      } else {
         static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', function(\$params) { extract(\$params); ?>" . $code . "<?php }); ?>";
+      }
     }
     public static function partViewCall($name)
     {
@@ -244,8 +254,9 @@ class Blade
             return '';
         }, $html);
 
+
         if(!empty(static::instance()->components)) {
-            $html = preg_replace_callback('/<nexus:([^\s>]+)([^>]*)>(.*?)<\/nexus:\1>/s', function ($res) {
+          $html = preg_replace_callback('/<nexus:([^\s>]+)([^>]*)>(.*?)<\/nexus:\1>/s', function ($res) {
                 $dom     = $res[1];
                 $attrs   = $res[2];
                 $content = $res[3];
@@ -255,22 +266,35 @@ class Blade
                   if(!class_exists($subClass, true)) {
                     kernel()->exception('Component Class no exists: ' . $subClass);
                   }
-                  $subClass = new $subClass;
                   preg_match_all('/\s+([^=]+)="([^"]*)"/', $attrs, $attrMatches, PREG_SET_ORDER);
-                  foreach ($attrMatches as $attrMatch) {
-                    if(strpos($attrMatch[1], ':') === 0) {
-                      $attr = trim($attrMatch[1], ':');
-                      $subClass->setInt($attr, $attrMatch[2]);
-                    } else {
-                      $subClass->setAttr($attrMatch[1], $attrMatch[2]);
-                    }
+                  if(!empty($attrMatches)) {
+                    $attrMatches = array_map(function($n) {
+                      return [
+                        'key' => $n[1],
+                        'val' => $n[2],
+                      ];
+                    }, $attrMatches);
                   }
-                  return $subClass;
+                  $entrada = var_export($attrMatches, true);
+                  $entrada = preg_replace('/\'(?<name>\$[\w\_]+)\'/', '$1', $entrada);
+
+                  $uniq = uniqid();
+
+                  $html = "<?php \Core\Blade::\$params['" . $uniq . "'] = new " . $subClass . ";\n";
+                  $html .= "if(method_exists(\Core\Blade::\$params['" . $uniq . "'], 'mount')) { \n";
+                  $html .= "\Core\Blade::\$params['" . $uniq . "']->mount();\n";
+                  $html .= "}\n";
+                  $html .= "?>\n";
+                  static::instance()->preCoding(null, $html);
+
+                  $html = "<?php \Core\Blade::partComponent(\Core\Blade::\$params['" . $uniq . "'], " . $entrada . "); ?>";
+                  return $html;
                 } else {
                     return '<!-- DOM-NO-RECONOCIDO -->';
                 }
             }, $html);
         }
+
 
         return trim($html);
     }
@@ -282,6 +306,7 @@ class Blade
         $html = static::preCompileBasic($html);
 
         if ($this->id === static::instance()->id) {
+          static::instance()->html_prepend = array_reverse(static::instance()->html_prepend);
             foreach (static::instance()->html_prepend as $p) {
                 $html = $p . $html;
             }
@@ -308,6 +333,7 @@ class Blade
                 }
             }
         }
+        static::instance()->html_prepend_end = true;
         $html = "\n<!--- theme: #" . $this->id . "-->\n" . $html . "\n<!--- end theme: #" . $this->id . "-->\n";
         return trim($html);
     }
@@ -321,6 +347,7 @@ class Blade
     }
     public function compile()
     {
+
         $html = $this->precompile();
         $html = str_replace("{{--", "<!--", $html);
         $html = str_replace("--}}", "-->", $html);
@@ -335,6 +362,7 @@ class Blade
         $html = str_replace('@endphp', '?>', $html);
         $html = str_replace('@else', '<?php } else { ?>', $html);
         $html = str_replace('@endif', '<?php } ?>', $html);
+
         file_put_contents($this->fileCached, $html);
         return $this->html();
     }

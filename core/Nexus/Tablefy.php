@@ -221,7 +221,7 @@ class Tablefy implements \JsonSerializable
     {
         $this->prepareColumns();
         if (method_exists($this, 'actionsByRow')) {
-            $this->actions = $this->actionsByRow();
+            $this->actions = $this->actionsByRow(0);
             if (!empty($this->actions)) {
                 foreach ($this->actions as $key => $f) {
                     $f->setIndex('row' . $key)->prepare($this);
@@ -685,13 +685,5 @@ class Tablefy implements \JsonSerializable
     public function jsonSerialize()
     {
         return $this->toArray();
-    }
-    public function response()
-    {
-        $this->repository();
-        $response = $this
-            ->appends(request()->input())
-            ->get();
-        return response()->json($response);
     }
 }

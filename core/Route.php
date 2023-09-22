@@ -229,7 +229,7 @@ class Route
     private function isControllerFormat()
     {
         if (is_string($this->callback)) {
-            return preg_match("/^[\w\_\\\]+\@[\w\_]+$/", $this->callback);
+            return preg_match("/^[\w\_\\\]+(\@[\w\_]+)?$/", $this->callback);
         }
         return false;
     }
@@ -433,6 +433,9 @@ class Route
             $this->controller[0] = $cc;
           }
         }
+      }
+      if(empty($this->controller[1])) {
+        $this->controller[1] = 'controller';
       }
       return $this;
     }

@@ -17,6 +17,16 @@ class Component {
     $this->content = $cc;
     return $this;
   }
+  public function setAttributes($attributes) {
+    foreach ($attributes as $attrMatch) {
+        if(strpos($attrMatch['key'], ':') === 0) {
+          $attr = trim($attrMatch['key'], ':');
+          $this->setInt($attr, $attrMatch['val']);
+        } else {
+          $this->setAttr($attrMatch['key'], $attrMatch['val']);
+        }
+      }
+  }
   public function setInt($name, $value) {
     $this->{$name} = $value;
     return $this;

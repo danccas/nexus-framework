@@ -288,7 +288,7 @@ class Model implements \JsonSerializable
     public static function all($columns = ['*'])
     {
         $model = static::instance();
-        return (new Collection((static::query()->setColumns($columns)->all())))->hydrate(static::class);
+        return (new Collection((static::query()->setColumns($columns)->all())));#->hydrate(static::class);
     }
     public static function hydrate($items)
     {

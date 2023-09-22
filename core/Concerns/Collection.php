@@ -18,7 +18,7 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     public function __construct($items = [])
     {
         if($items instanceof Collection) {
-            $this->items = $items->toArray();
+          $this->items = $items->toArray();
         } else {
             $this->items = $items;
         }
@@ -63,14 +63,14 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
         return isset($this->items[$this->position]);
 		}
 		public function pluck($value, $key = null) {
-			$rp = [];
-			$ii = $this->toArray();
+      $rp = [];
+      $ii = $this->toArray();
 			if($key === null) {
 				return array_map(function($n) use($value) {
 					return $n->{$value};
 				}, $ii);
-			}
-			foreach($ii as $n) {
+      }
+      foreach($ii as $n) {
 				//dd([$key, $value, $n->{$key}, $n->{$value}]);
 			  $rp[$n->{$key}] = $n->{$value};
 			}
