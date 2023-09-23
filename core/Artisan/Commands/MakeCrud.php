@@ -131,13 +131,14 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'view'  => $view,
         'columns' => $columns,
       ])->render();
+
       file_put_contents($file, "<?php\n" . $code);
       echo "Created: app\\Models\\" . $name . ".php\n";
     }
     private function createController($file, $model) {
       if(file_exists($file)) {
         echo "File exists: app\\Http\\Controllers\\" . $model . "Controller.php\n";
-//        return;
+        return;
       }
       $view = str($model)->studlyToSnake();
       $format = __DIR__ . '/../../Formats/controller.blade.php';
@@ -164,8 +165,10 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'columns' => $columns
       ])->render();
       $file = $directory . $model . 'TableView.php';
-      file_put_contents($file, "<?php\n" . $code);
-      echo "Created: app\\Http\\Nexus\\Views\\" . $model . "TableView.php\n";
+      if(file_exists($file)) {
+        file_put_contents($file, "<?php\n" . $code);
+        echo "Created: app\\Http\\Nexus\\Views\\" . $model . "TableView.php\n";
+      }
     }
     private function createViews($directory, $model, $columns) {
       if(!file_exists($directory)) {
@@ -180,7 +183,9 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'view'  => $view,
       ])->render();
       $file = $directory . 'index.blade.php';
-      file_put_contents($file, $code);
+      if(file_exists($file)) {
+        file_put_contents($file, $code);
+      }
 
       $format = __DIR__ . '/../../Formats/view_show.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
@@ -189,7 +194,9 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'columns' => $columns,
       ])->render();
       $file = $directory . 'show.blade.php';
-      file_put_contents($file, $code);
+      if(file_exists($file)) {
+        file_put_contents($file, $code);
+      }
 
       $format = __DIR__ . '/../../Formats/view_edit.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
@@ -197,7 +204,9 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'view'  => $view,
       ])->render();
       $file = $directory . 'edit.blade.php';
-      file_put_contents($file, $code);
+      if(file_exists($file)) {
+        file_put_contents($file, $code);
+      }
 
       $format = __DIR__ . '/../../Formats/view_form.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
@@ -205,7 +214,9 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'view'  => $view,
       ])->render();
       $file = $directory . 'form.blade.php';
-      file_put_contents($file, $code);
+      if(file_exists($file)) {
+        file_put_contents($file, $code);
+      }
 
       $format = __DIR__ . '/../../Formats/view_create.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
@@ -213,8 +224,9 @@ Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('mod
         'view'  => $view,
       ])->render();
       $file = $directory . 'create.blade.php';
-      file_put_contents($file, $code);
-
+      if(file_exists($file)) {
+        file_put_contents($file, $code);
+      }
       echo "Created Views: " . $model . "\n";
     }
 }
