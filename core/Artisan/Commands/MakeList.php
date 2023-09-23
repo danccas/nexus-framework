@@ -123,6 +123,7 @@ class MakeList extends Command
         'create'     => false,
         'repository' => $nameRouteRepo,
       ])->render();
+      @mkdir($file = app()->dir() . 'resources/views/' . $nameViewDir . '/');
       $file = app()->dir() . 'resources/views/' . $nameViewDir . '/' . $nameView . '.blade.php';
       if(!file_exists($file)) {
         echo "Created: {$file}\n";
