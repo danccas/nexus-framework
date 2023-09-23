@@ -2,6 +2,8 @@
 namespace App\Http\Controllers;
 
 use Core\Controller;
+use Core\Request;
+use Core\Response;
 use App\Models\{{ $model }};
 
 class {{ $model }}Controller extends Controller
@@ -18,12 +20,12 @@ public function show({{ $model }} ${{ $view }})
 
 
   function create() {
-    $form = Chip::form();
-    return view('chip.create', compact('form'));
+    $form = {{ $model }}::form();
+    return view('{{ $view }}.create', compact('form'));
   }
   function store(Request $request)
   {
-    $form = Chip::form();
+    $form = {{ $model }}::form();
     if (!$form->valid()) {
       return back()->withInputs()->with('message', $form->error());
     }
@@ -33,21 +35,21 @@ public function show({{ $model }} ${{ $view }})
   }
 
 
-  public function edit(Chip $chip)
+  public function edit({{ $model }} ${{ $view }})
   {
-    $form = Chip::form();
-    $form->setPreData((array) $chip->toArray());
-    return view('chip.edit', compact('chip', 'form'));
+    $form = {{ $model }}::form();
+    $form->setPreData((array) ${{ $view }}->toArray());
+    return view('{{ $view }}.edit', compact('{{ $view }}', 'form'));
   }
-  public function update(Chip $chip)
+  public function update({{ $model }} ${{ $view }})
   {
-    $form = Chip::form();
+    $form = {{ $model }}::form();
     if (!$form->valid()) {
       return back()->withInputs()->with('message', $form->error());
     }
 
     $data = $form->data();
-    $chip->update($data);
+    ${{ $view }}->update($data);
     return reponse()->redirect('{{ $view }}.index');
   }
 

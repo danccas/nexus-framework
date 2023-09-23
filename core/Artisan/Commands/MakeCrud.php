@@ -130,6 +130,15 @@ class MakeCrud extends Command
         mkdir($directory);
         echo "Created directory Views: " . $model . "\n";
       }
+      $view = str($model)->studlyToSnake();
+      $format = __DIR__ . '/../../Formats/view_create.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
+      echo $code;
+      exit;
+
 
       echo "Created Views: " . $model . "\n";
     }
