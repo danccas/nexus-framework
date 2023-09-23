@@ -32,7 +32,7 @@ class RouteResource
     function name($name)
     {
         foreach ($this->routes as $k => $r) {
-            if (in_array($k, ['tablefy'])) {
+            if (in_array($k, ['repository'])) {
                 $r->name($name . '.' . $k)->permission($name . '.index');
             } else {
                 $r->name($name . '.' . $k);

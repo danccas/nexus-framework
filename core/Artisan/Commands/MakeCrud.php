@@ -19,7 +19,7 @@ class MakeCrud extends Command
      *
      * @var string
      */
-    protected $description = 'Leer Correo';
+    protected $description = 'Create Crud';
 
     /**
      * Create a new command instance.
@@ -109,8 +109,8 @@ class MakeCrud extends Command
         $code = "
 
 ## Automatic Code
-Route::post('" . $view.  "es/repository', 'App\\Http\\Nexus\\Views\\" . $this->input('model') . "TableView')->name('" . $view . ".repository');
-Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('model') . "Controller')->parameter('" . $view . "');
+Route::post('" . $view.  "s/repository', 'App\\Http\\Nexus\\Views\\" . $this->input('model') . "TableView')->name('" . $view . ".repository');
+Route::resource('" . $view.  "s', 'App\\Http\\Controllers\\" . $this->input('model') . "Controller')->parameter('" . $view . "');
 
 ";
         file_put_contents(app()->dir() . 'routes/web.php', $code, FILE_APPEND);
@@ -120,7 +120,7 @@ Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('mo
     private function createModel($file, $dsn, $table, $name, $columns) {
       if(file_exists($file)) {
         echo "File exists: app\\Models\\" . $name . ".php\n";
-        //return;
+        return;
       }
       $view = str($name)->studlyToSnake();
       $format = __DIR__ . '/../../Formats/model.blade.php';
