@@ -110,7 +110,8 @@ class MakeList extends Command
           'type' => $c->data_type,
           'cast' => MakeHelp::castCompare($c->data_type),
         ];
-      });
+      })
+      ->take(8);
 
       $file_tableview = app()->dir() . 'app/Http/Nexus/Views/' . $nameTableView . 'TableView.php';
       if(!file_exists($file_tableview)) {
