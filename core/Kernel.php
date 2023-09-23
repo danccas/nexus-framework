@@ -4,6 +4,7 @@ namespace Core;
 
 use Core\Route;
 use App\Http\Kernel as KernelHttp;
+use Core\Artisan;
 
 class Kernel
 {
@@ -195,5 +196,10 @@ class Kernel
                 abort(404);
             }
         }
+    }
+    public function console() {
+      global $argc, $argv;
+        $console = new Artisan($argc, $argv);
+        return $console->output();
     }
 }

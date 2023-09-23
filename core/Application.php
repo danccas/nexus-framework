@@ -188,6 +188,9 @@ class Application
         }
         return $this->attrs[$key] = $value;
     }
+    public function dir() {
+      return $this->basePath;
+    }
     public function getPath()
     {
         return $this->basePath;

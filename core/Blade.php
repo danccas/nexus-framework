@@ -25,6 +25,7 @@ class Blade
     protected $html_prepend_end = false;
     protected $html_after   = [];
     protected $is_load = false;
+    static $is_verbose = false;
 
     public static $params = [];
     public static function instance($view_name = null)
@@ -120,7 +121,6 @@ class Blade
         $rp = '';
         if (!isset(static::instance()->partes[$name])) {
             return '';
-            return '<!-- no ' . $name . " -->\n";
         }
         foreach (static::instance()->partes[$name] as $r) {
             $imports = static::instance()->getHeredados();
@@ -128,16 +128,36 @@ class Blade
         }
         return $rp;
     }
+    public function verbose($tt) {
+      static::$is_verbose = $tt;
+      return $this;
+    }
+    public static function log($text) {
+      if(static::$is_verbose) {
+        return '<!-- ' . (is_array($text) ? json_encode($text) : $text) . ' -->';
+      } else {
+        return '';
+      }
+    }
     public static function path($name)
     {
+      if(strpos($name, '/') === 0) {
+        $directory = '';
+      } else {
+        $directory = app()->getPath() . 'resources/views/';
         $name = str_replace('.', '/', $name);
-        $file = app()->getPath() . 'resources/views/' . $name . '.php';
+      }
+      if(!file_exists($name)) {
+        $file = $directory . $name . '.php';
         if (!file_exists($file)) {
-            $file = app()->getPath() . 'resources/views/' . $name . '.blade.php';
+            $file = $directory . $name . '.blade.php';
             if (!file_exists($file)) {
                 echo "File not exists = " . $file;
                 exit();
             }
+        }
+      } else {
+        $file = $name;
         }
         $cache = app()->getPath() . '/cache/views/' . md5($file) . '.php';
         return [
@@ -170,7 +190,7 @@ class Blade
                 $th = (new Blade($res['name'], false));
                 $rp = '';
                 if (!empty($res['params'])) {
-                    $rp = "<!--- vars:" . $res['params'] . " --->\n<?php extract(" . $res['params'] . "); ?>";
+                    $rp = static::log("vars:" . $res['params']) . "\n<?php extract(" . $res['params'] . "); ?>";
                 }
                 $rp .= $th->precompile();
                 return $rp;
@@ -205,7 +225,7 @@ class Blade
         }, $html);
 
         $html = preg_replace_callback('/@method\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
-            return "<input type=\"hidden\" name=\"_method\" value=\"" . $res['name'] . "\">\n<!-- METHOD: " . $res['name'] . "-->\n";
+            return "<input type=\"hidden\" name=\"_method\" value=\"" . $res['name'] . "\">\n" . static::log("METHOD: " . $res['name']) . "\n";
         }, $html);
 
         $html = preg_replace_callback('/@section\([\'"](?<name>[^\'"]+)[\'"]\,(\s*)[\'"](?<body>[\s\S]*?)(\s*)[\'"]\)/', function ($res) {
@@ -290,7 +310,7 @@ class Blade
                   $html = "<?php \Core\Blade::partComponent(\Core\Blade::\$params['" . $uniq . "'], " . $entrada . "); ?>";
                   return $html;
                 } else {
-                    return '<!-- DOM-NO-RECONOCIDO -->';
+                    return static::log("DOM-NO-RECONOCIDO");
                 }
             }, $html);
         }
@@ -301,7 +321,7 @@ class Blade
     public function precompile()
     {
         $html = file_get_contents($this->file);
-        $html = "\n<!---- pre: " . $this->file . "--->\n" . $html;
+        $html = "\n" . static::log("pre: " . $this->file) . "\n" . $html;
 
         $html = static::preCompileBasic($html);
 
@@ -334,7 +354,7 @@ class Blade
             }
         }
         static::instance()->html_prepend_end = true;
-        $html = "\n<!--- theme: #" . $this->id . "-->\n" . $html . "\n<!--- end theme: #" . $this->id . "-->\n";
+        $html = "\n" . static::log("theme: #" . $this->id) . "\n" . $html . "\n" . static::log("end theme: #" . $this->id) . "\n";
         return trim($html);
     }
     private function html_asset_css($file, $name)
@@ -404,7 +424,7 @@ $htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery
             $diff = microtime(true) - $time_start;
             $sec = intval($diff);
             $micro = $diff - $sec;
-            $html  = $html . "\n<!--- Cache: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . "-->\n";
+            $html  = $html . "\n" . static::log("Cache: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro))) . "\n";
             return $html;
         } else {
             try {
@@ -412,7 +432,7 @@ $htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery
                 $diff = microtime(true) - $time_start;
                 $sec = intval($diff);
                 $micro = $diff - $sec;
-                $html  = $html . "\n<!--- Compile: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . " = " . $this->fileCached . "-->\n";
+                $html  = $html . "\n" . static::log("Compile: " . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . " = " . $this->fileCached) . "\n";
                 return $html;
             } catch (\Throwable $e) {
                 $html = static::obtenerRangoLineasArchivo($this->fileCached, $e->getLine() - 5, $e->getLine() + 5);

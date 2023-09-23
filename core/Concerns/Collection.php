@@ -76,6 +76,12 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
 			}
 			return $rp;
     }
+    public function filter(callable $callback) {
+      $this->items = array_filter($this->items, function($n) use($callback) {
+            return $callback((object) $n);
+      });
+      return $this;
+    }
     public function map(callable $callback)
     {
         $this->items = array_map(function($n) use($callback) {

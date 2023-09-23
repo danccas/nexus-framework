@@ -77,7 +77,10 @@ function clock($tt = -1)
 {
   return new Core\Clock($tt);
 }
-
+function str($tt = null)
+{
+  return new Core\Str($tt);
+}
 if (!function_exists('collect')) {
   function collect($items = null)
   {
