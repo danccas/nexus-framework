@@ -1,10 +1,12 @@
 {{ '@' }}extends('layouts.modern')
 {{ '@' }}section('content')
     <div class="container">
+      @if(!empty($create))
       <div style="padding: 10px 0;text-align: right;">
-        <a href="{{ "{{ route('" . $view . ".create') }}" }}" data-popup class="btn btn-sm btn-primary">Registrar</a>
+        <a href="{{ "{{ route('" . $create . "') }}" }}" data-popup class="btn btn-primary">Registrar</a>
       </div>
-        <{{ 'nexus:tablefy' }} :route="{{ $view }}.repository">
+      @endif
+        <{{ 'nexus:tablefy' }} :route="{{ $repository }}">
         </{{ 'nexus:tablefy' }}>
     </div>
 {{ '@' }}endsection

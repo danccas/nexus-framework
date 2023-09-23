@@ -69,11 +69,44 @@ if (!function_exists('env')) {
     return $data;
   }
 }
-function prompt($message = '') {
-  echo "\n" . $message . ": ";
+function o($message, $color = null) {
+  $colors = [
+    'BLUE' =>  "\033[0;34m",
+    'WHITE' => "\033[0;37m",
+    'RED'   => "\033[0;31m",
+  ];
+  if(is_null($color)) {
+    echo $message;
+  } else {
+    echo $colors[$color] . $message . $colors['WHITE'];
+  }
+}
+function prompt($message = '', $default = '', $can_empty = true) {
+  if(is_array($default)) {
+    $def = $default;
+    $default = '';
+    foreach($def as $d) {
+      if($d !== '' && !is_null($d)) {
+        $default = $d;
+        break;
+      }
+    }
+  }
+  if($default !== '') {
+   echo "\n" . $message . " (" . $default . "): ";
+  } else {
+    echo "\n" . $message . ": ";
+  }
   $handle = fopen ("php://stdin","r");
   $line = fgets($handle);
   fclose($handle);
+  $line = trim($line);
+  if($line == '') {
+    $line = $default;
+  }
+  if(!$can_empty && $line == '') {
+    return prompt($message, $default, $can_empty);
+  }
   return $line;
 }
 function asset($path)

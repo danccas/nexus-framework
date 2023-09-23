@@ -6,7 +6,7 @@ use Core\Nexus\Action;
 use Core\Request;
 use App\Models\{{ $model }};
 
-class {{ $model }}TableView extends Tablefy
+class {{ $name }}TableView extends Tablefy
 {
     protected $model = {{ $model }}::class;
     protected $paginate = 15;

@@ -29,13 +29,13 @@ public static function postUpdate() {
 			static::createIfNotExists($path . $dir);
 		}
 		$listado = [
-			'public/assets/libs' => 'F',
-			'public/assets' => 'I',
-			'resources/views/helloworld' => 'F',
-			'resources/views/library' => 'F',
-			'resources/views/layouts' => 'I',
-			'resources/views/panels' => 'I',
-			'util' => 'F',
+			'public/assets/libs/' => 'F',
+			'public/assets/' => 'I',
+			'resources/views/helloworld/' => 'F',
+			'resources/views/library/' => 'F',
+			'resources/views/layouts/' => 'I',
+			'resources/views/panels/' => 'I',
+			'util/' => 'F',
 			'app/Models/Libro.php' => 'F',
 			'app/Scopes/MultiTenantScope.php' => 'I',
 			'app/Http/Controllers/LibraryController.php' => 'F',
@@ -53,13 +53,14 @@ public static function postUpdate() {
 			}
 			$cmd = $pathGit . ' clone https://github.com/danccas/nexus.git ' . $tmp . 'nexus';
 			exec($cmd);
-			foreach($listado as $file => $method) {
+      foreach($listado as $file => $method) {
+        $destino = substr($file, -1) === '/' ? $path . $destino . '../.' : $path . $file;
 				if($method == 'F') {
-					$cmd = 'cp -r -v ' . $tmp . 'nexus/' . $file . ' ' . $path . $file;
+					$cmd = 'cp -r -v ' . $tmp . 'nexus/' . $file . ' ' . $destino;
 					exec($cmd);
 					echo "=> [FORCE] " . $cmd . "\n";
 				} else {
-					$cmd = 'cp -n -v ' . $tmp . 'nexus/' . $file . ' ' . $path . $file;
+					$cmd = 'cp -n -v ' . $tmp . 'nexus/' . $file . ' ' . $destino;
 					exec($cmd);
 					echo "=> [IGNORE] " . $cmd . "\n";
 				}

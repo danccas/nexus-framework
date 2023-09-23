@@ -166,7 +166,7 @@ class Kernel
         $request = new Request;
         $response = Response::instance();
         foreach ($this->routes as $e) {
-            if ($e->isMatch($request)) {
+          if ($e->isMatch($request)) {
                 $is_match = true;
                 $request->route = $e;
                 try {

@@ -16,6 +16,9 @@ class Command {
     }
   }
   function input($name) {
+    if(!isset($this->attrs[$name])) {
+      return null;
+    }
     return $this->attrs[$name];
   }
   function __set($name, $value) {

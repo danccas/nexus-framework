@@ -24,7 +24,7 @@ class RouteResource
             'update'   => (new Route)->setMethod('PUT')->setRegex($regex . '/:' . $regex)->setController($controller . '@update'),
             'destroy'  => (new Route)->setMethod('DELETE')->setRegex($regex . '/:' . $regex)->setController($controller . '@destroy'),
         );
-        if (!Route::exists($controller . '@repository')) {
+        if (!Route::exists($controller . '.repository')) {
             $this->routes['repository'] = (new Route)->setMethod('POST')->setRegex($regex . '/repository')->setController($controller . '@repository');
         }
         $this->name($regex);
@@ -63,5 +63,12 @@ class RouteResource
         foreach ($list as $key => $val) {
             $this->parameter($val);
         }
+        return $this;
+    }
+    function where($key, $value) {
+      foreach ($this->routes as $r) {
+       $r->where($key, $value);
+      }
+      return $this;
     }
 }
