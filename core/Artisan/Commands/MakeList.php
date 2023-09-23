@@ -100,7 +100,7 @@ class MakeList extends Command
       if(empty($columns)) {
         return o("No existen columnas");
       }
-      $columns
+      $columns = $columns
       ->filter(function($c) {
           return !in_array($c->column_name, ['id']);
       })
