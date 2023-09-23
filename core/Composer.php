@@ -42,6 +42,7 @@ public static function postUpdate() {
 			'app/Http/Controllers/HelloWorldController.php' => 'F',
 			'app/Http/Controllers/Auth/LoginController.php' => 'I',
 			'app/Auth.php' => 'I',
+			'artisan' => 'F',
 		];
 		$pathGit = '/usr/bin/git';
 		if(file_exists($pathGit)) {
@@ -69,6 +70,7 @@ public static function postUpdate() {
 	private static function createIfNotExists($directory) {
 		if(!file_exists($directory)) {
 			echo "create: " . $directory . "\n";
+			mkdir($directory);
 		}
 	}
 }
