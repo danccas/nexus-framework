@@ -1,6 +1,7 @@
 namespace App\Models;
 
 use Core\Model;
+use Core\Formity;
 
 class {{ $model }} extends Model
 {
@@ -22,4 +23,12 @@ $fillable = array_map(function($n) {
       '{{ $c->name }}' => '{{ $c->cast }}',
 @endforeach
     ];
+
+  public static function form() {
+    $form = Formity::instance('{{ $view }}');
+@foreach($columns->toArray() as $c)
+      $form->addField('{{ $c['name'] }}', 'input:{{ $c['cast'] }}');
+@endforeach
+    return $form;
+  }
 }

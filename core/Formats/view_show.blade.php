@@ -1,13 +1,15 @@
-{{ '@' }}extends('template.ajax')
-{{ '@' }}section('title','Detalles del chip')
+{{ '@' }}extends('layouts.ajax')
+{{ '@' }}section('title','Detalles')
 {{ '@' }}section('content')
 <div class="card">
   <div class="card-body">
     <table class="table">
+@foreach($columns->toArray() as $c)
       <tr>
-        <th>Iccid</th>
-        <td>{{ "{{ $" . $view . "->iccid }}" }}</td>
+        <th>{{ $c['name']}}</th>
+        <td>{{ "{"."{" }} ${{ $view }}->{{ $c['name'] }} {{"}"."}"}}</td>
       </tr>
+@endforeach
     </table>
 </div>
 </div>

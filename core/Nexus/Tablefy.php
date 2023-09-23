@@ -45,7 +45,7 @@ class Tablefy implements \JsonSerializable
     public $link_prev    = null;
     public $link_next    = null;
 
-    public $actions      = [];
+    public $actions      = false;
     public $actions_group = [];
     public $querys = [];
 
@@ -219,15 +219,10 @@ class Tablefy implements \JsonSerializable
     }
     private function prepare()
     {
-        $this->prepareColumns();
-        if (method_exists($this, 'actionsByRow')) {
-            $this->actions = $this->actionsByRow(0);
-            if (!empty($this->actions)) {
-                foreach ($this->actions as $key => $f) {
-                    $f->setIndex('row' . $key)->prepare($this);
-                }
-            }
-        }
+      $this->prepareColumns();
+      if (method_exists($this, 'actionsByRow')) {
+        $this->actions = true;
+      }
         if (method_exists($this, 'bulkActions')) {
             $this->actions_group = $this->bulkActions();
             if (!empty($this->actions_group)) {
@@ -266,7 +261,7 @@ class Tablefy implements \JsonSerializable
             }
         }
         if ($this->action == 'click') {
-            if (!empty($this->actions)) {
+            if (!empty($this->actions) && false) {
                 foreach ($this->actions as $key => $f) {
                     if ($this->inputs['option'] == $f->uid()) {
                         $rp = ($this->model)::find($this->inputs['ids']);
@@ -469,6 +464,22 @@ class Tablefy implements \JsonSerializable
         }
 
         $ce = &$this;
+
+        if (method_exists($this, 'actionsByRow')) {
+          $this->items->map(function($row) use ($ce) {
+            $acts = $this->actionsByRow($row);
+            if(!empty($acts)) {
+              foreach ($acts as $key => $f) {
+                $f->setIndex('row' . $key)->prepare($this);
+              }
+            }
+            $row->__options = $acts;
+            #array_map(function($n) {
+            #  return $n->toArray();
+            #}, $acts);
+            return $row;
+          });
+        }
 
         if (!empty($this->_view)) {
             $this->cbRow = function ($n) use ($ce) {

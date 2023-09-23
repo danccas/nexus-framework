@@ -109,6 +109,7 @@ class MakeCrud extends Command
         $code = "
 
 ## Automatic Code
+Route::post('" . $view.  "es/repository', 'App\\Http\\Nexus\\Views\\" . $this->input('model') . "TableView')->name('" . $view . ".repository');
 Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('model') . "Controller')->parameter('" . $view . "');
 
 ";
@@ -121,12 +122,13 @@ Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('mo
         echo "File exists: app\\Models\\" . $name . ".php\n";
         //return;
       }
-
+      $view = str($name)->studlyToSnake();
       $format = __DIR__ . '/../../Formats/model.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
         'dsn'   => $dsn,
         'table' => $table,
         'model' => $name,
+        'view'  => $view,
         'columns' => $columns,
       ])->render();
       file_put_contents($file, "<?php\n" . $code);
@@ -143,7 +145,7 @@ Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('mo
         'model' => $model,
         'view'  => $view,
       ])->render();
-      file_put_contents($file, $code);
+      file_put_contents($file, "<?php\n" . $code);
       echo "Created: app\\Http\\Controllers\\" . $model . "Controller.php\n";
     }
     private function createTableView($directory, $table, $model, $columns) {
@@ -165,7 +167,7 @@ Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('mo
       file_put_contents($file, "<?php\n" . $code);
       echo "Created: app\\Http\\Nexus\\Views\\" . $model . "TableView.php\n";
     }
-    private function createViews($directory, $model) {
+    private function createViews($directory, $model, $columns) {
       if(!file_exists($directory)) {
         mkdir($directory);
         echo "Created directory Views: " . $model . "\n";
@@ -184,6 +186,7 @@ Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('mo
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
+        'columns' => $columns,
       ])->render();
       $file = $directory . 'show.blade.php';
       file_put_contents($file, $code);

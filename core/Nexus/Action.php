@@ -14,6 +14,7 @@ class Action implements \JsonSerializable {
   protected $model = null;
   protected $cb    = null;
   protected $response = null;
+  protected $ajax  = false;
 
   function __construct($title = null) {
     if(!is_null($title)) {
@@ -44,11 +45,18 @@ class Action implements \JsonSerializable {
     $this->icon = $val;
     return $this;
   }
+  public function ajax($tt) {
+    $this->ajax = $tt;
+    return $this;
+  }
   public function link($val) {
     $this->link = $val;
     return $this;
   }
-
+  public function route($name, $params = []) {
+    $this->link = route($name, $params)->link();
+    return $this;
+  }
   public function prepare(Tablefy $tableView) {
     $this->uid   = md5($this->index . '-' . $this->title . '-' . __FILE__);
     $this->model = $tableView;
@@ -57,6 +65,7 @@ class Action implements \JsonSerializable {
       'title' => $this->title,
       'icon'  => $this->icon,
       'link'  => $this->link,
+      'ajax'  => $this->ajax,
     ]);
   }
 

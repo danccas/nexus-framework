@@ -13,6 +13,7 @@ class Formity
 
   private static $instances = null;
   private $nToken = '_token';
+  private $onlyFields = false;
 
   public $mform = null;
 
@@ -20,6 +21,10 @@ class Formity
   public static function exists($cdr)
   {
     return array_key_exists($cdr, static::$instances);
+  }
+  public function onlyFields($tt) {
+    $this->onlyFields = $tt;
+    return $this;
   }
 
   /* se agrego  */
@@ -545,11 +550,11 @@ class Formity
     }
     return $html;
   }
-  private static function _renderFormity($form, $nivel = 0)
+  private static function _renderFormity($form, $onlyFields, $nivel = 0)
   {
     $rp = '';
     $par = $nivel % 2 === 0;
-    if ($nivel == 0) {
+    if ($nivel == 0 && !$onlyFields) {
       $rp .= $form->begin();
       /* if(ES_POPY) {
         $rp .= '<div style="margin-top: 15px;text-align: right;font-size: 12px;">';
@@ -598,7 +603,7 @@ class Formity
       #      $rp .= '</div>';
       $rp .= '</div>';
     }
-    if ($nivel == 0) {
+    if ($nivel == 0 && !$onlyFields) {
       $rp .= '<div class="column is-12" style="margin-top: 15px;text-align: right;font-size: 12px;">';
       $rp .= $form->buildButtons();
       $rp .= '</div>';
@@ -610,7 +615,7 @@ class Formity
   }
   function renderFormity()
   {
-    echo static::_renderFormity($this);
+    echo static::_renderFormity($this, $this->onlyFields);
   }
   function render()
   {
@@ -626,7 +631,7 @@ class Formity
     }
     #$rp .= Route::renderErrors();
     $rp .= '<div>';
-    $rp .= static::_renderFormity($this);
+    $rp .= static::_renderFormity($this, $this->onlyFields);
     $rp .= '</div>';
     return $rp;
   }

@@ -1,4 +1,4 @@
-{{ '@' }}extends('template.ajax')
+{{ '@' }}extends('layouts.ajax')
 {{ '@' }}section('title', 'Actualizar')
 {{ '@' }}section('content')
 <div class="card">

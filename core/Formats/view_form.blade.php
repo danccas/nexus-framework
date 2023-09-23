@@ -1,3 +1,3 @@
 <div>
-    {{ "{{ \$form->render() }}" }}
+    {{ "{{ \$form->onlyFields(true)->render() }}" }}
 </div>

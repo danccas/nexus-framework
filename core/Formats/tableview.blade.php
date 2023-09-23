@@ -15,7 +15,7 @@ class {{ $model }}TableView extends Tablefy
     {
         return [
 @foreach($columns->toArray() as $c)
-            Header::name('{{ $c['name'] }}')->width({{ (900 / count($columns)) }}),
+            Header::name('{{ $c['name'] }}')->width({{ (1100 / count($columns)) }}),
 @endforeach
         ];
     }
@@ -38,9 +38,9 @@ class {{ $model }}TableView extends Tablefy
     protected function actionsByRow($row)
     {
         return [
-          Action::title('Ver')->icon('eye')->link('/dashboard'),
-          Action::title('Editar')->icon('edit')->link('/dashboard'),
-          Action::title('Eliminar')->icon('delete')->link('/dashboard'),
+          Action::title('Ver')->icon('show')->ajax(true)->route('{{ $view }}.show', $row->id),
+          Action::title('Editar')->icon('edit')->ajax(true)->route('{{ $view }}.edit', $row->id),
+//        Action::title('Eliminar')->icon('trash')->route('{{ $view }}.delete', $row->id),
         ];
     }
 

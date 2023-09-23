@@ -17,7 +17,6 @@ class RouteResource
         $this->regex = $regex;
         $this->routes = array(
             'index'    => (new Route)->setMethod('GET')->setRegex($regex)->setController($controller . '@index'),
-            'tablefy'    => (new Route)->setMethod('POST')->setRegex($regex . '/tablefy')->setController($controller . '@tablefy'),
             'create'   => (new Route)->setMethod('GET')->setRegex($regex . '/create')->setController($controller . '@create'),
             'store'    => (new Route)->setMethod('POST')->setRegex($regex)->setController($controller . '@store'),
             'show'     => (new Route)->setMethod('GET')->setRegex($regex . '/:' . $regex)->setController($controller . '@show'),
@@ -25,6 +24,9 @@ class RouteResource
             'update'   => (new Route)->setMethod('PUT')->setRegex($regex . '/:' . $regex)->setController($controller . '@update'),
             'destroy'  => (new Route)->setMethod('DELETE')->setRegex($regex . '/:' . $regex)->setController($controller . '@destroy'),
         );
+        if(!Route::exists($controller . '@repository')) {
+          $this->routes[] = (new Route)->setMethod('POST')->setRegex($regex . '/repository')->setController($controller . '@repository');
+        }
         $this->name($regex);
     }
     function name($name)

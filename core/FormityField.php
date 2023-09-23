@@ -78,6 +78,9 @@ class FormityField
     $div = ':';
     $cr = null;
     $extra = '';
+    if($type == 'string') {
+      $type = 'text';
+    }
     if ($type instanceof Formity) {
       $this->childstruct = $type;
       $type->repeat = true;
