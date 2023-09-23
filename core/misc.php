@@ -69,6 +69,13 @@ if (!function_exists('env')) {
     return $data;
   }
 }
+function prompt($message = '') {
+  echo "\n" . $message . ": ";
+  $handle = fopen ("php://stdin","r");
+  $line = fgets($handle);
+  fclose($handle);
+  return $line;
+}
 function asset($path)
 {
   return '/' . $path;

@@ -23,6 +23,7 @@ class Artisan {
   private function prepareNatives() {
     foreach([
       'make:crud' => \Core\Artisan\Commands\MakeCrud::class,
+      'make:list' => \Core\Artisan\Commands\MakeList::class,
     ] as $key => $cc) {
       static::addCmd($key, $cc);
     }
@@ -31,6 +32,9 @@ class Artisan {
     $section = $this->argv[1];
     if(empty($section)) {
       abort(404, 'no command');
+    }
+    if(!isset(static::$cmds[$section])) {
+      abort('no exists command');
     }
     $this->controller = new (static::$cmds[$section]);
     $this->controller->setArgs($this->argv);

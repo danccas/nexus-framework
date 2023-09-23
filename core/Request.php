@@ -28,7 +28,9 @@ class Request {
 		}
 		public function capture() {
 			$this->_ajax   = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
-			$this->_method = strtoupper($_SERVER['REQUEST_METHOD']);
+			if(!empty($_SERVER['REQUEST_METHOD'])) {
+				$this->_method = strtoupper($_SERVER['REQUEST_METHOD']);
+			  }
 			if(!empty($_REQUEST['_method'])) {
 				$method_static = strtoupper($_REQUEST['_method']);
 				if(in_array($method_static, ['PUT'])) {
