@@ -54,7 +54,7 @@ public static function postUpdate() {
 			$cmd = $pathGit . ' clone https://github.com/danccas/nexus.git ' . $tmp . 'nexus';
 			exec($cmd);
       foreach($listado as $file => $method) {
-        $destino = substr($file, -1) === '/' ? $path . $destino . '../.' : $path . $file;
+        $destino = substr($file, -1) === '/' ? $path . $file . '../.' : $path . $file;
 				if($method == 'F') {
 					$cmd = 'cp -r -v ' . $tmp . 'nexus/' . $file . ' ' . $destino;
 					exec($cmd);
