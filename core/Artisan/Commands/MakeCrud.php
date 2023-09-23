@@ -3,6 +3,7 @@ namespace Core\Artisan\Commands;
 
 use Core\Artisan\Command;
 use Core\Blade;
+use Core\Route;
 
 class MakeCrud extends Command
 {
@@ -92,12 +93,27 @@ class MakeCrud extends Command
       $model      = 'app/Models/' . $this->input('model') . '.php';
       $controller = 'app/Http/Controllers/' . $this->input('model') . 'Controller.php';
       $views      = 'resources/views/' . str($this->input('model'))->studlyToSnake() . '/';
+      $tableview  = 'app/Http/Nexus/Views/';
 
       $this->createModel(app()->dir() . $model, $this->input('dsn'), $this->input('table'), $this->input('model'), $columns);
 
       $this->createController(app()->dir() . $controller, $this->input('model'), $columns);
 
       $this->createViews(app()->dir() . $views, $this->input('model'), $columns);
+
+      $this->createTableView(app()->dir() . $tableview , $this->input('table'), $this->input('model'), $columns);
+
+      $view = str($this->input('model'))->studlyToSnake();
+      if(!Route::exists($view . '.index')) {
+        echo "Register Route: " . $view . "\n";
+        $code = "
+
+## Automatic Code
+Route::resource('" . $view.  "es', 'App\\Http\\Controllers\\" . $this->input('model') . "Controller')->parameter('" . $view . "');
+
+";
+        file_put_contents(app()->dir() . 'routes/web.php', $code, FILE_APPEND);
+      }
     }
 
     private function createModel($file, $dsn, $table, $name, $columns) {
@@ -119,11 +135,35 @@ class MakeCrud extends Command
     private function createController($file, $model) {
       if(file_exists($file)) {
         echo "File exists: app\\Http\\Controllers\\" . $model . "Controller.php\n";
-        return;
+//        return;
       }
-      $code = 'Mi primer modelo';
+      $view = str($model)->studlyToSnake();
+      $format = __DIR__ . '/../../Formats/controller.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
       file_put_contents($file, $code);
       echo "Created: app\\Http\\Controllers\\" . $model . "Controller.php\n";
+    }
+    private function createTableView($directory, $table, $model, $columns) {
+      @mkdir(app()->dir() . 'app/Http/Nexus');
+      @mkdir(app()->dir() . 'app/Http/Nexus/Views');
+      @mkdir(app()->dir() . 'app/Http/Nexus/Actions');
+      if(!file_exists($directory . '../')) {
+        @mkdir($directory . '../');
+      }
+      $view = str($model)->studlyToSnake();
+      $format = __DIR__ . '/../../Formats/tableview.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'table' => $table,
+        'model' => $model,
+        'view'  => $view,
+        'columns' => $columns
+      ])->render();
+      $file = $directory . $model . 'TableView.php';
+      file_put_contents($file, "<?php\n" . $code);
+      echo "Created: app\\Http\\Nexus\\Views\\" . $model . "TableView.php\n";
     }
     private function createViews($directory, $model) {
       if(!file_exists($directory)) {
@@ -131,14 +171,46 @@ class MakeCrud extends Command
         echo "Created directory Views: " . $model . "\n";
       }
       $view = str($model)->studlyToSnake();
+
+      $format = __DIR__ . '/../../Formats/view_index.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
+      $file = $directory . 'index.blade.php';
+      file_put_contents($file, $code);
+
+      $format = __DIR__ . '/../../Formats/view_show.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
+      $file = $directory . 'show.blade.php';
+      file_put_contents($file, $code);
+
+      $format = __DIR__ . '/../../Formats/view_edit.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
+      $file = $directory . 'edit.blade.php';
+      file_put_contents($file, $code);
+
+      $format = __DIR__ . '/../../Formats/view_form.blade.php';
+      $code = (new Blade($format))->verbose(false)->append([
+        'model' => $model,
+        'view'  => $view,
+      ])->render();
+      $file = $directory . 'form.blade.php';
+      file_put_contents($file, $code);
+
       $format = __DIR__ . '/../../Formats/view_create.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
       ])->render();
-      echo $code;
-      exit;
-
+      $file = $directory . 'create.blade.php';
+      file_put_contents($file, $code);
 
       echo "Created Views: " . $model . "\n";
     }

@@ -18,7 +18,7 @@ $fillable = array_map(function($n) {
     protected $fillable = ['{{ implode("', '", $fillable) }}'];
 
     protected $casts = [
-@foreach($columns as $c)      
+@foreach($columns as $c)
       '{{ $c->name }}' => '{{ $c->cast }}',
 @endforeach
     ];

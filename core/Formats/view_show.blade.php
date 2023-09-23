@@ -6,7 +6,7 @@
     <table class="table">
       <tr>
         <th>Iccid</th>
-        <td>{{ "\{\{ $" . $view . "->iccid \}\}" }}</td>
+        <td>{{ "{{ $" . $view . "->iccid }}" }}</td>
       </tr>
     </table>
 </div>
