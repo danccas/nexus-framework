@@ -60,7 +60,7 @@ public static function postUpdate() {
 					exec($cmd);
 					echo "=> [FORCE] " . $cmd . "\n";
 				} else {
-					$cmd = 'cp -n -v ' . $tmp . 'nexus/' . $file . ' ' . $destino;
+					$cmd = 'cp -r -n -v ' . $tmp . 'nexus/' . $file . ' ' . $destino;
 					exec($cmd);
 					echo "=> [IGNORE] " . $cmd . "\n";
 				}
