@@ -4,7 +4,7 @@ namespace Core\Nexus;
 
 class Header implements \JsonSerializable {
   protected $name        = null;
-  protected $width        = null;
+  protected $width       = null;
   protected $description = null;
   protected $sortable    = null;
   protected $filtable    = null;
@@ -15,7 +15,10 @@ class Header implements \JsonSerializable {
   public static function name($name) {
     return new static($name);
   }
-  public function width($px) {
+  public function width($px = null) {
+    if(is_null($px)) {
+      return $this->width;
+    }
     $this->width = $px;
     return $this;
   }

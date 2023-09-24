@@ -219,10 +219,10 @@ class Tablefy implements \JsonSerializable
     }
     private function prepare()
     {
-      $this->prepareColumns();
       if (method_exists($this, 'actionsByRow')) {
         $this->actions = true;
       }
+       $this->prepareColumns();
         if (method_exists($this, 'bulkActions')) {
             $this->actions_group = $this->bulkActions();
             if (!empty($this->actions_group)) {
@@ -240,6 +240,18 @@ class Tablefy implements \JsonSerializable
                 $this->listHeaders = array_map(function ($h) {
                     return is_string($h) ? new Header($h) : $h;
                 }, $this->listHeaders);
+                $widthAll = 0;
+                if(!empty($this->actions)) {
+                  $widthAll += 100;
+                }
+                foreach($this->listHeaders as $h) {
+                  $widthAll += $h->width() == null ? 100 : $h->width();
+                }
+                foreach($this->listHeaders as $h) {
+                  if($h->width() !== null) {
+                    $h->width((($h->width() / $widthAll) * 100) . '%');
+                  }
+                }
             }
         }
     }
