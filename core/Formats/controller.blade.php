@@ -1,4 +1,3 @@
-
 namespace App\Http\Controllers;
 
 use Core\Controller;
@@ -8,12 +7,13 @@ use App\Models\{{ $model }};
 
 class {{ $model }}Controller extends Controller
 {
-    public function index()
-    {
-  		return view('{{ $view }}.index');
-    }
 
-public function show({{ $model }} ${{ $view }})
+  public function index()
+  {
+    return view('{{ $view }}.index');
+  }
+
+  public function show({{ $model }} ${{ $view }})
   {
     return view('{{ $view }}.show',compact('{{ $view}}'));
   }
@@ -52,7 +52,4 @@ public function show({{ $model }} ${{ $view }})
     ${{ $view }}->update($data);
     return reponse()->redirect('{{ $view }}.index');
   }
-
-
 }
-
