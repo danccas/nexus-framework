@@ -81,9 +81,10 @@ class MakeList extends Command
       $nameView        = prompt('Name File View', [$this->input('view'), $methodAlias, 'index'], false);
 
       $uriRoute        = prompt('URL Main Route', [$this->input('route'), ($methodController == 'index' ? null : str($nameModel)->snakeCase() . 's/' . $methodController), str($nameModel)->snakeCase() . 's'], false);
-      $nameRoute       = prompt('Name Main Route', [$this->input('nameRoute'), str_replace('/', '.', $uriRoute)], false);
+      $nameRoute       = prompt('Name Main Route', [$this->input('nameRoute'), ($methodController == 'index' ? $nameViewDir : $nameViewDir . '.' . $methodAlias)], false);
       $uriRouteRepo    = prompt('URL Repository Route', [$this->input('routeRepo'), $uriRoute . '/repository'], false);
-      $nameRouteRepo   = prompt('Name Repository Route', [$this->input('nameRouteRepo'), str_replace('/', '.', $uriRouteRepo)], false);
+      $nameRouteRepo   = prompt('Name Repository Route', [$this->input('nameRouteRepo'), $nameRoute . '.repository'], false);
+
 
       $file_controller = app()->dir() . 'app/Http/Controllers/' . $nameController . '.php';
       if(!file_exists($file_controller)) {
@@ -147,7 +148,9 @@ Route::get('" . $uriRoute . "', 'App\\Http\\Controllers\\" . $nameController . "
 ";
         file_put_contents(app()->dir() . 'routes/web.php', $code, FILE_APPEND);
       }
-
+      echo "\n";
+      echo o('Link: /' . $uriRoute, 'WHITE');
+      echo "\n";
       echo "End;\n";
     }
 }

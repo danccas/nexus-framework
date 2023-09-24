@@ -106,8 +106,8 @@ class MakeHelp
     }
     public static function createViews($directory, $model, $columns) {
       if(!file_exists($directory)) {
-        mkdir($directory);
-        echo "Created directory Views: " . $model . "\n";
+        @mkdir($directory);
+        echo "Created directory Views: " . $directory . "\n";
       }
       $view = str($model)->studlyToSnake();
 

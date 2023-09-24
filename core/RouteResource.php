@@ -25,7 +25,9 @@ class RouteResource
             'destroy'  => (new Route)->setMethod('DELETE')->setRegex($regex . '/:' . $regex)->setController($controller . '@destroy'),
         );
         if (!Route::exists($controller . '.repository')) {
+          if(method_exists($controller, 'repository')) {
             $this->routes['repository'] = (new Route)->setMethod('POST')->setRegex($regex . '/repository')->setController($controller . '@repository');
+          }
         }
         $this->name($regex);
     }
