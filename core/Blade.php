@@ -252,7 +252,7 @@ class Blade
             return  "<?php if(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[\!\=\,\s\&\$\w\\\:\(\)\_\<\>\-\"\'\[\]]+)\)/', function ($res) {
+        $html = preg_replace_callback('/@elseif\s*\(\s*(?<for>[\!\=\,\s\&\$\|\w\\\:\(\)\_\<\>\-\"\'\[\]]+)\)/', function ($res) {
             return  "<?php } elseif(" . $res['for'] . ") { ?>\n";
         }, $html);
 

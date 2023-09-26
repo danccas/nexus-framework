@@ -33,6 +33,7 @@ class DBFuncs
             $n['field'] = str_replace('*', '', str_replace('=', '', $field));
             $n['id']    = str_replace('_', '', $n['field']);
             $n['value'] = is_null($value) ? null : $value;
+            $n['value'] = is_bool($value) ? ($value ? 1 : 0) : $value;
             $value = $n;
         });
         if ($type == 'set') {
