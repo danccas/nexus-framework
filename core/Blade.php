@@ -248,7 +248,7 @@ class Blade
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\,\s\&\$\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function ($res) {
+        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\,\s\&\?\$\|\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function ($res) {
             return  "<?php if(" . $res['for'] . ") { ?>\n";
         }, $html);
 
