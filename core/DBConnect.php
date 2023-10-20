@@ -22,6 +22,18 @@ class DBConnect
     }
     public function execute($query, $prepare)
     {
+      //Todo: Mejorar proceso de prepare
+      if(!empty($prepare) && is_array($prepare)) {
+        $prepare = array_map(function($n) {
+          if($n === true) {
+            return 1;
+          }
+          if($n === false) {
+            return 0;
+          }
+          return $n;
+        }, $prepare);
+      }
         return $this->engine->execute($this->connection, $query, $prepare);
     }
     public function engine()

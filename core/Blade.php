@@ -25,7 +25,7 @@ class Blade
     protected $html_prepend_end = false;
     protected $html_after   = [];
     protected $is_load = false;
-    static $is_verbose = false;
+    static $is_verbose = true;
 
     public static $params = [];
     public static function instance($view_name = null)
@@ -103,7 +103,11 @@ class Blade
         if (!isset(static::instance()->partes[$name])) {
             static::instance()->partes[$name] = [];
         }
-        static::instance()->partes[$name][] = $callback;
+        if(!is_array($callback)) {
+          static::instance()->partes[$name][] = [$callback];
+        } else {
+          static::instance()->partes[$name][] = $callback;
+        }
     }
     public static function partViewExists($name)
     {
@@ -113,7 +117,18 @@ class Blade
       if(is_null($section)) {
         static::instance()->html_prepend[] = $code;
       } else {
-        static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', function(\$params) { extract(\$params); ?>" . $code . "<?php }); ?>";
+        $tab = '<<<<<>>>>>';
+        $separador = $tab . '@parent' . $tab;
+        $code = str_replace('@parent', $separador, $code);
+        $code = explode($tab, $code);
+        $code = array_map(function($cc) {
+          if($cc === '@parent') {
+            return "'" . $cc . "'";
+          } else {
+            return "function(\$params) { extract(\$params); ?>" . $cc . "<?php }";
+          }
+        }, $code);
+        static::instance()->html_prepend[] = "<?php \Core\Blade::partView('" . $section . "', [" . implode(',', $code) . "]); ?>";
       }
     }
     public static function partViewCall($name)
@@ -122,11 +137,32 @@ class Blade
         if (!isset(static::instance()->partes[$name])) {
             return '';
         }
-        foreach (static::instance()->partes[$name] as $r) {
-            $imports = static::instance()->getHeredados();
-            $rp .= ($r)($imports);
+        $pps = static::instance()->partes[$name];
+        usort($pps, function($a, $b) {
+          return (in_array('@parent', $a) ? 1 : 0) - (in_array('@parent', $b) ? 1 : 0); 
+        });
+        $acumu = [];
+        foreach ($pps as $r) {
+          $fila = [];
+          foreach($r as $ff) {
+            if(is_callable($ff)) {
+              $fila[] = $ff;
+            } else {
+              foreach($acumu as $aa) {
+                $fila[] = $aa;
+              }
+              $acumu = [];
+            }
+          }
+          foreach($fila as $f) {
+            $acumu[] = $f;
+          }
         }
-        return $rp;
+        foreach($acumu as $aa) {
+          $imports = static::instance()->getHeredados();
+          ($aa)($imports);
+        }
+        return '';
     }
     public function verbose($tt) {
       static::$is_verbose = $tt;
@@ -248,7 +284,11 @@ class Blade
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
-        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\,\s\&\?\$\|\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function ($res) {
+        $html = preg_replace_callback("/@for\s*\(\s*(?<for>[\s\&\$\+\;\=\,\/\w\\\:\(\)\_\<\>\-\"\'\[\]]+)\)\n/", function($res) {
+            return  "<?php for(" . $res['for'] . ") { ?>\n";
+        }, $html);
+
+        $html = preg_replace_callback("/@if\s*\(\s*(?<for>[\!\=\,\s\%\&\?\$\|\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/m", function ($res) {
             return  "<?php if(" . $res['for'] . ") { ?>\n";
         }, $html);
 
@@ -260,7 +300,7 @@ class Blade
             return  "<?php if(\Core\Blade::partViewExists('" . $res['name'] . "')) { ?>";
         }, $html);
 
-        $html = preg_replace_callback('/@end(foreach|if)/m', function ($res) {
+        $html = preg_replace_callback('/@end(foreach|if|for)/m', function ($res) {
             return  "<?php } ?>";
         }, $html);
 
@@ -373,8 +413,9 @@ class Blade
 $htmlStyles = '<script type="text/javascript" src="{{ asset(\'assets/libs/require/require.min.js\') }}"></script>
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" type="text/css" />
 <link href="{{ asset(\'assets/libs/bootstrap/bootstrap.min.css\') }}" rel="stylesheet" type="text/css" />';
-$htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery/jquery.min.js\') }}"></script>
-<script type="text/javascript" src="{{ asset(\'assets/libs/popup/popup.min.js\') }}"></script>';
+$htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery/jquery.min.js\') }}"></script>' . 
+  '<script type="text/javascript" src="{{ asset(\'assets/libs/bootstrap/bootstrap.min.js\') }}"></script>' . 
+  '<script type="text/javascript" src="{{ asset(\'assets/libs/popup/popup.min.js\') }}"></script>';
         $html = str_replace('@NexusStyles', $htmlStyles, $html);
         $html = str_replace('@NexusScripts', $htmlScrips, $html);
 
@@ -385,7 +426,6 @@ $htmlScrips = '<script type="text/javascript" src="{{ asset(\'assets/libs/jquery
         $html = str_replace('{!!', '<?=', $html);
         $html = str_replace('!!}', '?>', $html);
 
-        $html = str_replace('@parent', '', $html);
         $html = str_replace('@csrf', '', $html);
         $html = str_replace('@php', '<?php', $html);
         $html = str_replace('@endphp', '?>', $html);

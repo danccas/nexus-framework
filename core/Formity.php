@@ -187,7 +187,7 @@ class Formity
           return true;
         }
 			} else {
-				dd([$this->nToken, request()->input(), request()->input($this->nToken), $this->token]);
+				//dd([$this->nToken, request()->input(), request()->input($this->nToken), $this->token]);
 				abort(404);
 			}
     }

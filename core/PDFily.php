@@ -16,7 +16,10 @@ class Pdf extends TCPDF {
   function __construct() {
       parent::__construct();
   }
-	public function header() {
+  public function header() {
+    if(empty($this->code_header)) {
+      return '';
+    }
     $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $this->code_header, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
 		$this->SetY(5);
 		$img_file = 'https://www.creainter.com.pe/assets/images/logo.png';#/var/www/html/simaci.com.pe/public/assets2/img/logo-light.png';
@@ -25,6 +28,9 @@ class Pdf extends TCPDF {
   }
 
   public function Footer() {
+    if(empty($this->code_footer)) {
+      return '';
+    }
     $this->SetY(-20);
     $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $this->code_footer, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
   }
@@ -59,23 +65,28 @@ class PDFily {
 		}
 		public function view($theme, $params = [], $orientacion = null) {
 			$this->is_manual = true;
-			$this->_blade = (new Blade($theme))->append($params);
-			return $this->addPage($_blade, $orientacion);
+      $this->_blade = (new Blade($theme))->append($params);
+			return $this->addPage($this->_blade, $orientacion);
 		}
     public function addPage($html, $tipo = null) {
-			$html2 = '';
+
+      $html2 = '';
 			$part = explode('<header>', $html);
-			$html2 .= $part[0];
-			$part = explode('</header>', $part[1]);
-			$html2 .= $part[1];
-			$this->_instance->code_header = $part[0];
+      $html2 .= $part[0];
+      if(!empty($part[1])) {
+			  $part = explode('</header>', $part[1]);
+			  $html2 .= $part[1];
+		  	$this->_instance->code_header = $part[0];
+      }
 
 			$html = '';
 			$part = explode('<footer>', $html2);
-			$html .= $part[0];
-			$part = explode('</footer>', $part[1]);
-      $html .= $part[1];
-			$this->_instance->code_footer = $part[0];
+      $html .= $part[0];
+      if(!empty($part[1])) {
+		  	$part = explode('</footer>', $part[1]);
+        $html .= $part[1];
+			  $this->_instance->code_footer = $part[0];
+      }
 			unset($html2);
 			if(is_null($tipo)) {
         $this->_instance->AddPage();
@@ -84,11 +95,11 @@ class PDFily {
       }
       $this->_instance->writeHTMLCell($w=0, $h=0, $x='', $y=20, $html, $border=0, $ln=1, $fill=0, $reseth=true, $align='L', $autopadding = true);
     }
-		public function save($name, $tipo = 'I') {
+    public function save($name, $tipo = 'I') {
 			if($this->_blade !== null) {
 				$this->_blade->append(['pdf' => $this->_instance]);
-				if(!$is_manual) {
-					$this->addPage($this->_blade, $this->_blade->orientacion);
+        if(!$this->is_manual) {
+					@$this->addPage($this->_blade, $this->_blade->orientacion);
 				}
 			}
       $name = strpos($name, '.pdf') === false ? $name . '.pdf' : $name;

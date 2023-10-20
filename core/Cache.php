@@ -95,10 +95,15 @@ class Cache
         $this->set($data);
         return $this;
 		}
-		public function item_delete($key, $value) {
+		public function item_delete($key, $value = null) {
         $data = $this->data();
         if(empty($data)) {
             $data = new stdClass;
+        }
+        if($value === null) {
+          unset($data->{$key});
+          $this->set($data);
+          return $this;
         }
         if(!isset($data->{$key})) {
           $data->{$key} = [];

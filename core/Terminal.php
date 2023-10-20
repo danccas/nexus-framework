@@ -17,7 +17,9 @@ class Terminal {
         $this->host     = $host;
         $this->port     = $port;
     }
-
+    public function hostname() {
+      return $this->host;
+    }
     function connect($username, $password = null) {
         $this->username = $username;
         $this->password = $password;
@@ -34,13 +36,42 @@ class Terminal {
 #					$this->auths = \ssh2_auth_none($this->connect, $this->username);
         }
     }
-
+    public function scp_send($local_file, $remote_file, $permission = 0644) {
+      \ssh2_scp_send($this->connect, $local_file, $remote_file, $permission);
+      return $this;
+    }
+    public function scp_recv($remote_file, $local_file, $permission = 0644) {
+      \ssh2_scp_recv($this->connect, $remote_file, $local_file);
+      return $this;
+    }
     function exec($cmd) {
         $stream = \ssh2_exec($this->connect, $cmd);
         \stream_set_blocking($stream, true);
-        $stream_out = \ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-        $this->result = trim(\stream_get_contents($stream_out));
+        #$stream_out = \ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+        $rr = trim(\stream_get_contents($stream));
+        fclose($stream);
+        return $rr;
         return $this;
+    }
+    public function shell_exec($cmd) {
+      $stream = \ssh2_exec($this->connect, $cmd);
+      \stream_set_blocking($stream, true);
+      $stream_out = \ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+      return trim(\stream_get_contents($stream_out));
+    }
+    public function file_exists($uri) {
+      $cmd = "test -e \"" . $uri . "\" && echo '1' || echo '0'";
+      $out = $this->shell_exec($cmd);
+      return $out === '1';
+    }
+    public function close() {
+      \ssh2_exec($this->connect, 'exit');
+      \ssh2_disconnect($this->connect);
+      $this->connect = null;
+      return $this;
+    }
+    public function disconnect() {
+      return $this->close();
     }
     function stream($callback) {
         return $this;
@@ -64,5 +95,16 @@ class Terminal {
             $this->result = $data;
         }
         return $this;
+    }
+    public function findProcessByName($query) {
+      return false;
+    }
+    public function findProcessById($pid) {
+      $cmd = "ps -p " . $pid;
+      $out = $this->shell_exec($cmd);
+      return strpos($out, strval($pid)) !== false;
+    }
+    public function kill($pid) {
+      return false;
     }
 }

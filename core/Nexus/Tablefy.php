@@ -265,6 +265,10 @@ class Tablefy implements \JsonSerializable
         if (!$this->is_appends) {
             $this->appends([]);
         }
+        if(method_exists($this, 'component')) {
+          $this->component();
+
+        }
         if (!empty($this->model)) {
             $name = $this->model;
             $this->fillable_columns = (new $name)->getFillable();
@@ -344,24 +348,21 @@ class Tablefy implements \JsonSerializable
                     } else {
                         $row = $this->inputs['id'];
                     }
-                    $this->setItems([
+                    return [
                         'success' => true,
                         'result'  => $ee($row, $this->inputs['column']),
-                    ]);
-                    return $this;
+                    ];
                 } else {
-                    $this->setItems([
+                    return [
                         'success' => false,
                         'message' => 'No data0',
-                    ]);
-                    return $this;
+                    ];
                 }
             }
-            $this->setItems([
+            return [
                 'success' => false,
                 'message' => 'No data1'
-            ]);
-            return $this;
+            ];
         } elseif ($this->action == 'save') {
             if (!empty($this->inputs['column'])) {
                 if ($ee = $this->eventColumn($this->action, $this->inputs['column'])) {
@@ -382,27 +383,24 @@ class Tablefy implements \JsonSerializable
 
                     $rp = $ee($row, $response);
                     if (!$rp) {
-                        $this->setItems([
+                        return [
                             'success' => false,
-                        ]);
-                        return $this;
+                        ];
                     }
                     if (!empty($this->cbRow)) {
                         $row->_map = ($this->cbRow)($row);
                     }
-                    $this->setItems([
+                    return [
                         'success' => true,
                         'row'     => $row,
-                    ]);
-                    return $this;
+                    ];
                 }
             }
-            $this->setItems([
+            return [
                 'success' => false,
                 'message' => 'No data2',
                 'ee' => $ee
-            ]);
-            return $this;
+            ];
         }
         $queryCount = $this->query_a;
         if (strpos($queryCount, '--started') !== FALSE && strpos($queryCount, '--pagination') !== FALSE) {
@@ -460,15 +458,15 @@ class Tablefy implements \JsonSerializable
                 return $n;
             });
             if ($this->items->first() !== null) {
-                $keys = (array) $this->items->first();
+                $keys = ($this->items->first())->toArray();
             }
         } else {
             $this->items = $data->all();
             $keys = isset($this->items[0]) ?  (array) $this->items[0] : [];
         }
         if (!empty($keys)) {
-            $keys = array_keys($keys);
             unset($keys['id']);
+            $keys = array_keys($keys);
             foreach ($keys as $k) {
                 $this->eventColumnDefault('edit', $k);
                 $this->eventColumnDefault('save', $k);

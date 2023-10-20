@@ -248,29 +248,29 @@ class DBCore extends \Core\DBFuncs
     $this->establishConnection();
     _log($this->flog, 'INI TRANSACTION =>');
     if (is_callable($callback)) {
-      $this->connection->beginTransaction();
+      $this->engine()->transaction();
 
       $bound = \Closure::bind($callback, $this);
       $rp = $bound($this);
       if ($rp) {
-        $this->commit();
+        $this->engine()->commit();
       } else {
-        $this->rollback();
+        $this->engine()->rollback();
       }
     } else {
-      $this->connection->beginTransaction();
+      $this->engine()->transaction();
     }
   }
   function commit()
   {
     $this->establishConnection();
     _log($this->flog, ' <= END TRANSACTION: COMMIT');
-    return $this->connection->commit();
+    return $this->engine()->commit();
   }
   function rollback()
   {
     $this->establishConnection();
     _log($this->flog, ' <= END TRANSACTION: ROLLBACK');
-    return $this->connection->rollback();
+    return $this->engine()->rollback();
   }
 }

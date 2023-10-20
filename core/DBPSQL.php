@@ -189,4 +189,16 @@ class DBPSQL
         }
         return null;
     }
+    public function transaction() {
+      $this->connect->beginTransaction();
+      return $this;
+    }
+    public function commit() {
+      $this->connect->commit();
+      return $this;
+    }
+    public function rollback() {
+      $this->connect->rollback();
+      return $this;
+    }
 }

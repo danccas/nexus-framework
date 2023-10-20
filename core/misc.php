@@ -39,9 +39,13 @@ function table($data = -1)
 {
   return dom()->table($data);
 }
-function dom()
+function dom($element = null)
 {
-  return new Core\DOMDx;
+  if($element === null) {
+    return new Core\DOMDx;
+  } else {
+    return new Core\DOMx($element);
+  }
 }
 function dd($data)
 {

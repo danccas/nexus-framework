@@ -19,10 +19,14 @@ class Clock
             if (is_numeric($time)) {
                 $this->moment = $time;
             } else {
-							$this->moment = strtotime($time);
-							if(empty($this->moment)) {
-								$this->moment = false;
-							}
+              if(is_null($time)) {
+                $this->moment = false;
+              } else {
+  							$this->moment = strtotime($time);
+  							if(empty($this->moment)) {
+  								$this->moment = false;
+  							}
+              }
             }
         }
     }
@@ -37,7 +41,11 @@ class Clock
     function time($formato = 'h:i:s A')
     {
         return date($formato, $this->moment);
-		}
+    }
+    public function year()
+    {
+        return date('Y', $this->moment);
+    }
 		public function long()
     {
         $fecha = $this->moment;

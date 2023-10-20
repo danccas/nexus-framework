@@ -62,7 +62,7 @@ class Response
 	);
 	private $withs = [];
 	private $withsInput = [];
-
+  private $pathFile = null;
 	private static $instance;
 
 	public static function instance()
@@ -143,9 +143,22 @@ class Response
 		}
 		return $pdf->save($download);
 	}
-	public function download($file)
-	{
-		$this->format = 'download';
+	public function download($file, $alias = null, $headers = [])
+  {
+    if(empty($headers)) {
+      if(!empty($alias)) {
+        $this->header('Content-Disposition', 'attachment; filename="' . $alias . '"');
+      } else {
+        $this->header('Content-Disposition', 'attachment');
+      }
+    }
+    if(!empty($headers)) {
+      foreach($headers as $key => $val) {
+        $this->header($key, $val);
+      }
+    }
+    $this->format = 'download';
+    $this->pathFile = $file;
 		return $this;
 	}
 	public function back()
@@ -243,7 +256,11 @@ class Response
 		}
 		if ($this->theme->isLoad()) {
 			return $this->theme;
-		}
+    }
+    if($this->format == 'download') {
+      readfile($this->pathFile);
+      exit;
+    }
 		if ($this->format == 'json') {
 			return json_encode($this->getData());
 		}

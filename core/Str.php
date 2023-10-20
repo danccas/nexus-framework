@@ -3,8 +3,19 @@ namespace Core;
 
 class Str {
   protected $text;
-  function __construct($text = null) {
+  function __construct($text = '') {
     $this->text = $text;
+  }
+  function notilde() {
+    return iconv('UTF-8', 'ASCII//TRANSLIT', $this->text);
+    $noTildes = strtr($this->text, 
+        'áéíóúüÁÉÍÓÚÜ', 
+        'aeiouuAEIOUU'
+    );
+    return $noTildes;
+  }
+  function trunc($cant) {
+    return mb_strimwidth($this->text, 0, $cant, "...");
   }
   function studlyToSnake() {
     $snakeText = preg_replace_callback('/[A-Z]/', function ($match) {
@@ -13,7 +24,8 @@ class Str {
     return ltrim($snakeText, '_');
   }
   function snakeCase() {
-    $text = preg_replace('/[^a-zA-Z0-9]+/', ' ', $this->text);
+    $text = $this->notilde();
+    $text = preg_replace('/[^a-zA-Z0-9]+/', ' ', $text);
     $words = explode(' ', $text);
     $snakeCaseText = strtolower(implode('_', $words));
     return $snakeCaseText;
