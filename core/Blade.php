@@ -41,6 +41,9 @@ class Blade
             $this->load($file, $cache);
         }
     }
+    public static function view($name) {
+      return new static($name, true);
+    }
     public static function component($dom, $classComponent) {
         static::instance()->components[$dom] = $classComponent;
         return static::instance();
@@ -188,14 +191,13 @@ class Blade
         if (!file_exists($file)) {
             $file = $directory . $name . '.blade.php';
             if (!file_exists($file)) {
-                echo "File not exists = " . $file;
-                exit();
+              kernel()->exception("File not exists = " . $file . "\n ");
             }
         }
       } else {
         $file = $name;
-        }
-        $cache = app()->getPath() . '/cache/views/' . md5($file) . '.php';
+      }
+      $cache = app()->getPath() . '/cache/views/' . md5($file) . '.php';
         return [
             'file'  => $file,
             'cache' => $cache,
@@ -302,6 +304,10 @@ class Blade
 
         $html = preg_replace_callback('/@end(foreach|if|for)/m', function ($res) {
             return  "<?php } ?>";
+        }, $html);
+
+        $html = preg_replace_callback('/@view\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {
+          return  "<?= \Core\Blade::view(\"" . $res['name'] . "\") ?>";
         }, $html);
 
         $html = preg_replace_callback('/@js\(\'(?<name>[^\']+)\'\)\s*/', function ($res) {

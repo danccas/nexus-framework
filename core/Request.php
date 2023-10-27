@@ -100,6 +100,10 @@ class Request {
     public function all() {
       return $this->_inputs;
     }
+    public function boolean($name) {
+      $qq = $this->input($name);
+      return !empty($qq);
+    }
     public function input($name = null, $coalesce = null) {
 			if(is_null($name)) {
 				return $this->inputs();
@@ -117,6 +121,17 @@ class Request {
     }
     public function by($zone) {
         return false;
+    }
+    public function except(...$keys)
+    {
+      if (count($keys) === 1 && is_array($keys[0])) {
+        $keys = $keys[0];
+      }
+      $inputs = $this->all();
+      foreach($inputs as $val) {
+        unset($inputs[$val]);
+      }
+      return $inputs;
     }
     public function __get($key)
     {

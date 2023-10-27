@@ -272,6 +272,9 @@ class Tablefy implements \JsonSerializable
         if (!empty($this->model)) {
             $name = $this->model;
             $this->fillable_columns = (new $name)->getFillable();
+            if (method_exists($this, 'events')) {
+                $this->events();
+            }
             if (method_exists($name, 'tablefy')) {
                 $name::tablefy($this);
             }
@@ -376,7 +379,7 @@ class Tablefy implements \JsonSerializable
                             $row = $this->inputs['id'];
                         }
                     }
-                    $response = new ResponsePagination();
+                    $response = new \stdClass;
                     $response->id    = $this->inputs['id'];
                     $response->field = $this->inputs['column'];
                     $response->value = $this->inputs['value'];

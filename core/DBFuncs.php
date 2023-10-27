@@ -32,8 +32,15 @@ class DBFuncs
             $n['equal'] = strpos($field, '=') === strlen($field) - 1 || $value instanceof Raw;
             $n['field'] = str_replace('*', '', str_replace('=', '', $field));
             $n['id']    = str_replace('_', '', $n['field']);
-            $n['value'] = is_null($value) ? null : $value;
-            $n['value'] = is_bool($value) ? ($value ? 1 : 0) : $value;
+
+            if(is_bool($value)) {
+              $value = $value ? 1 : 0;
+            } elseif(is_null($value)) {
+              $value = null;
+            } elseif($value === '') {
+              $value = null;
+            }
+            $n['value'] = $value;
             $value = $n;
         });
         if ($type == 'set') {
@@ -121,7 +128,7 @@ class DBFuncs
             return false;
         }
         static::process_data('set', $where, $wherelist, $datalistw);
-        $sql .= 'WHERE ' . $wherelist;
+        $sql .= ' WHERE ' . $wherelist;
         $this->exec($sql, $datalistw);
         return true;
     }

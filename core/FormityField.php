@@ -118,11 +118,11 @@ class FormityField
       blade()->asset('/css/formity.tree.css');
       require_once(ABS_LIBRERIAS . 'formity.tree.php');
     } elseif ($this->type == 'word') {
-      blade()->asset('/js/trumbowyg.min.js');
-      blade()->asset('/js/trumbowyg.table.js');
+      blade()->asset('/assets/libs/trumbowyg/trumbowyg.min.js');
+      blade()->asset('/assets/libs/trumbowyg/trumbowyg.table.js');
       #Route::JS('/js/trumbowyg.pasteembed.js');
-      blade()->asset('/css/trumbowyg.min.css');
-      blade()->asset('/css/trumbowyg.table.css');
+      blade()->asset('/assets/libs/trumbowyg/trumbowyg.min.css');
+      blade()->asset('/assets/libs/trumbowyg/trumbowyg.table.css');
     } elseif ($this->type == 'textarea' && $this->extra == 'tags') {
       blade()->asset('/js/jquery.tagsinput.js');
       blade()->asset('/css/jquery.tagsinput.css');
@@ -816,10 +816,11 @@ class FormityField
       }
     } elseif ($this->type == 'word') {
       $h .= '<div>';
+      $this->value = strval($this->value);
       $h .= '<textarea id="wysiwyg_' . $keyw . '" name="' . $keyw . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '">' . htmlentities($this->value) . '</textarea>';
-      $h .= "<script>$('#wysiwyg_" . $keyw . "').trumbowyg({ closable: true, ";
+      $h .= "<script> require('/assets/js/jquery-ui.min.js', function() { $('#wysiwyg_" . $keyw . "').trumbowyg({ closable: true, ";
       $h .= 'btns:[["viewHTML"],["undo","redo"],["formatting"],["strong","em","del"],["superscript","subscript"],["link"],["insertImage"],["justifyLeft","justifyCenter","justifyRight","justifyFull"],["unorderedList","orderedList"],["horizontalRule"],["removeformat"],["fullscreen"],["table"]],';
-      $h .= "plugins: { table: { } } }); $('#wysiwyg_" . $keyw . "').on('tbwchange', (e) => { $(e.target).change(); })</script>";
+      $h .= "plugins: { table: { } } }); $('#wysiwyg_" . $keyw . "').on('tbwchange', (e) => { $(e.target).change(); }) })</script>";
       $h .= '</div>';
     } elseif ($this->type == 'panel') {
       $h .= '<nav class="panel">';

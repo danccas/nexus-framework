@@ -4,7 +4,7 @@ namespace Core;
 class Str {
   protected $text;
   function __construct($text = '') {
-    $this->text = $text;
+    $this->text = strval($text);
   }
   function notilde() {
     return iconv('UTF-8', 'ASCII//TRANSLIT', $this->text);
@@ -14,8 +14,11 @@ class Str {
     );
     return $noTildes;
   }
-  function trunc($cant) {
+  function elipsis($cant) {
     return mb_strimwidth($this->text, 0, $cant, "...");
+  }
+  function trunc($cant) {
+    return substr($this->text, 0, $cant);
   }
   function studlyToSnake() {
     $snakeText = preg_replace_callback('/[A-Z]/', function ($match) {

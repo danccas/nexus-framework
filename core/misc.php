@@ -1223,6 +1223,7 @@ function exec_no_conflict($file)
 }
 function quitar_tildes($str)
 {
+  $str = strval($str);
   return str_replace(
     array('á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'),
     array('a', 'e', 'i', 'o', 'u', 'n', 'a', 'e', 'i', 'o', 'u', 'n'),

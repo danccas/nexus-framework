@@ -68,7 +68,7 @@ class DBPSQL
     public function prepareQuery()
     {
         $ce = $this;
-        $ce->prepares_mod = $ce->prepares;
+        $ce->prepares_mod = [];
         if (!empty($this->wheres) && in_array($this->action, ['get', 'update'])) {
             $this->wheres = array_map(function ($n) use ($ce) {
                 $uu = 'v' . uniqid();
@@ -103,16 +103,14 @@ class DBPSQL
             if (empty($ce->prepares)) {
                 return null;
             }
+            DBFuncs::process_data('set', $this->prepares, $fieldlist, $datalist, $duplelist);
+            //dd([$fieldlist, $datalist, $duplelist]);
             $rp1 = 'UPDATE ' . implode(', ', $this->tables) . ' SET ';
-            $rp = [];
-            foreach ($ce->prepares as $k => $v) {
-                $rp[] = $k . ' = :' . $k;
-            }
-            $rp1 .= implode(', ', $rp) . ' ';
+            $rp1 .= $fieldlist . ' ';
             if (!empty($this->wheres)) {
                 $rp1 .= 'WHERE ' . implode(' AND ', $this->wheres) . "\n";
             }
-            return [$rp1, $this->prepares_mod];
+            return [$rp1, array_merge($this->prepares_mod, $datalist)];
         } elseif ($this->action == 'get') {
             $rp = 'SELECT ' . (empty($this->selects) ? '*' : implode(', ', $this->selects)) . "\n";
             $rp .= 'FROM ' . implode(', ', $this->tables) . "\n";
@@ -184,8 +182,12 @@ class DBPSQL
     }
     public function lastInsertId()
     {
-        if (!empty($this->connect)) {
-            return $this->connect->lastInsertId();
+      if (!empty($this->connect)) {
+        try {
+          return $this->connect->lastInsertId();
+        } catch(\PDOException $err) {
+          return null;
+        }
         }
         return null;
     }

@@ -30,6 +30,13 @@ class Clock
             }
         }
     }
+    function get($formato = 'd/m/Y H:i:s')
+    {
+      if($this->moment === false) {
+        return null;
+      }
+        return date($formato, $this->moment);
+    }
     function date($relleno = 'Sin Fecha')
 		{
 			if($this->moment === false) {
