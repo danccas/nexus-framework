@@ -3,6 +3,7 @@
 namespace Core;
 
 use stdClass;
+use Core\JSON;
 
 class Cache
 {
@@ -42,7 +43,7 @@ class Cache
             'time' => time(),
             'data' => $data,
         ];
-        $data = json_encode($data);
+        $data = JSON::encode($data);
         file_put_contents($this->file, $data);
         return true;
     }
@@ -69,7 +70,7 @@ class Cache
             return null;
         }
         $data = file_get_contents($this->file);
-        return json_decode($data);
+        return JSON::decode($data);
     }
     public function data()
     {

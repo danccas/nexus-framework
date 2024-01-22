@@ -65,13 +65,19 @@ class Clock
         $hora = !empty($hora) ? ' a las ' . date("h:i A", $fecha) : '';
         return ucfirst(static::$DIAS[date('w', $fecha)]) . ', ' . date('d', $fecha) . ' de ' . ucfirst(static::$MESES[date('n', $fecha) - 1]) . ' del ' . date('Y', $fecha) . $hora;
 		}
-		function basic() {
+    function basic() {
+      if($this->moment === false) {
+        return null;
+      }
 			$rp = '';
 			if(date('Y-m-d', $this->moment) != date('Y-m-d')) {
 				$rp .= date('d/m/Y', $this->moment) . ', ';
 			}
 			return $rp . date('h:i:s A', $this->moment);
-		}
+    }
+    public function short() {
+      return $this->basic();
+    }
 		static function pad($input, $limit,  $text = '0') {
 			return str_pad($input, $limit, $text, STR_PAD_LEFT);
 		}

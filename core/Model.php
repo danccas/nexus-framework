@@ -108,6 +108,7 @@ class Model implements \JsonSerializable
         if (!isset($this->{$field_id}) || empty($this->{$field_id})) {
             return collect([]);
         }
+        return (new $model)->newQueryWithoutScopes()->where($fk_id, '=', $this->{$field_id});
         return $model::query()->where($fk_id, '=', $this->{$field_id});
     }
 
@@ -139,7 +140,12 @@ class Model implements \JsonSerializable
     public function fill(array $attributes)
     {
         $totallyGuarded = $this->totallyGuarded();
-
+        if($this->exists) {
+          foreach ($attributes as $key => $value) {
+            $this->{$key} = $value;
+          }
+          return $this;
+        }
         if (!empty($attributes[$this->primaryKey])) {
             $this->exists = true;
         }
@@ -162,7 +168,15 @@ class Model implements \JsonSerializable
 
     public function delete()
     {
-        exit("editar");
+      $query = static::query();
+      if ($this->fireModelEvent('deleting') === false) {
+            return false;
+      }
+      if ($this->exists) {
+        $res = $this->setKeysForSaveQuery($query)
+                    ->delete();
+      }
+      $this->fireModelEvent('deleted', false);
     }
 
     public function save(array $options = [])
@@ -244,6 +258,12 @@ class Model implements \JsonSerializable
         // table from the database. Not all tables have to be incrementing though.
 
         $attributes = $this->getAttributes();
+        $onlyFillable = [];
+        foreach($attributes as $key => $val) {
+          if($this->isFillable($key)) {
+            $onlyFillable[$key] = $val;
+          }
+        }
         #        if ($this->getIncrementing()) {
         #            $this->insertAndSetId($query, $attributes);
         #        }
@@ -256,7 +276,7 @@ class Model implements \JsonSerializable
         #                return true;
         #            }
 
-        $res = $query->insert($attributes)->first();
+        $res = $query->insert($onlyFillable)->first();
         #        }
 
 
@@ -275,6 +295,12 @@ class Model implements \JsonSerializable
     {
         $query->where($this->getPrimaryKey(), '=', $this->getAttribute($this->primaryKey));
         return $query;
+    }
+    public function replicate() {
+      $ce = clone $this;
+      $ce->exists = false;
+      $ce->setAttribute($ce->primaryKey, null);
+      return $ce;
     }
     public function newCollection(array $models = [])
     {
@@ -423,10 +449,10 @@ class Model implements \JsonSerializable
     }
     public function __set($key, $value)
     {
-        $this->setAttribute($key, $value);
-        if ($this->isFillable($key)) {
+        if ($this->isFillable($key) && $value != $this->{$key}) {
             $this->setChange($key, $value);
         }
+        $this->setAttribute($key, $value);
     }
     public static function __callStatic($method, $parameters)
     {

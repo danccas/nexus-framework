@@ -115,6 +115,10 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     {
         return new static(array_slice($this->items, $offset, $length, true));
     }
+    public function size(): int
+    {
+      return $this->count();
+    }
     public function count(): int
     {
         return count($this->items);

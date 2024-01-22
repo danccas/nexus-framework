@@ -1,5 +1,6 @@
 <?php
 namespace Core;
+use Core\JSON;
 
 class FormityField
 {
@@ -315,7 +316,7 @@ class FormityField
           }
         }
         if ($main_form->is_ajax) {
-          $main_form->ajax_response[] = "formity_set_value('" . $this->getNameRequest() . "', " . json_encode($trp) . ");";
+          $main_form->ajax_response[] = "formity_set_value('" . $this->getNameRequest() . "', " . JSON::encode($trp) . ");";
         }
       }
       return $this;
@@ -332,7 +333,7 @@ class FormityField
     $rp = false;
     if ($force || $this->validarValue($value)) {
       if ($main_form->is_ajax) {
-        $main_form->ajax_response[] = "formity_set_value('" . $this->getNameRequest() . "', " . json_encode($value) . ");";
+        $main_form->ajax_response[] = "formity_set_value('" . $this->getNameRequest() . "', " . JSON::encode($value) . ");";
       }
       if (!($this->extra == 'file' && !empty($this->value) && !$this->seteo)) {
         $this->seteo = true;
@@ -380,7 +381,7 @@ class FormityField
         if ($this->mform->byRequest('POST')) {
           $value = $value($this->mform, $this);
           echo "formity_set_value('" . $this->getNameRequest() . "', ";
-          echo json_encode($value);
+          echo JSON::encode($value);
           echo ");";
           exit;
         }
@@ -397,7 +398,7 @@ class FormityField
             });
             $options = array_values($options);
           }
-          echo json_encode($options);
+          echo JSON::encode($options);
           echo ");";
           exit;
         }
@@ -489,7 +490,7 @@ class FormityField
             });
             $options = array_values($options);
           }
-          echo json_encode($options);
+          echo JSON::encode($options);
           echo ");";
           exit;
         }
@@ -517,7 +518,7 @@ class FormityField
       $this->options = is_callable($options) ? $options($this->mform, $this) : $options;
     }
     if ($this->mform->is_ajax) {
-      $this->mform->ajax_response[] = "formity_set_options('" . $this->getNameRequest() . "', " . json_encode($this->options) . ");";
+      $this->mform->ajax_response[] = "formity_set_options('" . $this->getNameRequest() . "', " . JSON::encode($this->options) . ");";
     }
     return $this;
   }

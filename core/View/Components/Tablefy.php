@@ -4,6 +4,7 @@ use Core\View\Component;
 use Core\Blade;
 use Core\Route;
 use Core\Nexus\Tablefy as TablefyCore;
+use Core\JSON;
 
 class Tablefy extends Component {
 
@@ -87,7 +88,7 @@ class Tablefy extends Component {
       return '<table id="' . $this->uniq . '"></table>'.
         '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
-                    . 'var ' . $this->uniq . " = new Tablefy(" . json_encode($params) . ').init(true);'
+                    . 'var ' . $this->uniq . " = new Tablefy(" . \Core\JSON::encode($params) . ').init(true);'
                     . "});"
                     . '</script>';
     }

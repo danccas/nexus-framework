@@ -3,6 +3,7 @@
 namespace Core;
 
 use Core\Database\Builder;
+use Core\JSON;
 
 class DBCore extends \Core\DBFuncs
 {
@@ -106,7 +107,7 @@ class DBCore extends \Core\DBFuncs
       }
     }
     if ($this->cache) {
-      $token = 'query_' . md5(json_encode([$sql, $prepare]));
+      $token = 'query_' . md5(JSON::encode([$sql, $prepare]));
       $cache = cache($token)->expire($this->cacheExpire);
       if (!$cache->hasExpired()) {
         $rp = $cache->dump();
@@ -127,7 +128,7 @@ class DBCore extends \Core\DBFuncs
     $sec = intval($diff);
     $micro = $diff - $sec;
     if ($diff > 1) {
-      file_put_contents('/tmp/query_slow.log', date('Y-m-d H:i:s') . ' => [' . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . '] ' . $sql . " = " . json_encode($prepare) . "\n\n", FILE_APPEND | LOCK_EX);
+      file_put_contents('/tmp/query_slow.log', date('Y-m-d H:i:s') . ' => [' . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . '] ' . $sql . " = " . JSON::encode($prepare) . "\n\n", FILE_APPEND | LOCK_EX);
     }
 
     if ($this->cache && !empty($cache)) {

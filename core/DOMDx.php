@@ -3,6 +3,7 @@ namespace Core;
 
 use Core\Concerns\Collection;
 use Core\Model;
+use Core\JSON;
 
 class DOMDx {
     protected $elem;
@@ -27,7 +28,7 @@ class DOMDx {
     }
     public function cache($key) {
         $cache = cache($key)->dump();
-        $this->set(json_decode(json_encode($cache->data)));
+        $this->set(JSON::decode(JSON::encode($cache->data)));
         $this->mfooter = date('d/m/Y h:i:s A', $cache->time);
         return $this;
     }

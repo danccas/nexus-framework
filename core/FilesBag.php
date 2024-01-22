@@ -43,6 +43,13 @@ class FilesBag implements \IteratorAggregate, \Countable
       $key = strtr(strtolower($key), '_', '-');
         $this->files[$key] = $values;
     }
+    public function hasFile($key) {
+      return $this->exists($key);
+    }
+    public function exists($key) {
+      $key = strtr(strtolower($key), '_', '-');
+      return !empty($this->files[$key]);
+    }
 
     /**
      * Gets a header value by name.

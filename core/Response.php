@@ -2,8 +2,10 @@
 
 namespace Core;
 
+use Core\Nexus\Tablefy;
 use Core\Concerns\Collection;
 use Core\Blade;
+use Core\JSON;
 
 class Response
 {
@@ -97,7 +99,8 @@ class Response
 	}
 	public function json($data)
 	{
-		$this->format = 'json';
+    $this->format = 'json';
+    $this->theme = null;
 		$this->header('Content-Type', 'application/json; charset=utf-8');
 		$this->data = $data;
 		return $this;
@@ -198,10 +201,15 @@ class Response
 	{
 		if ($this->data instanceof Response) {
 			return $this->migrate($this->data);
-		} elseif ($this->data instanceof Collection) {
-			return $this->data->toArray();
-		} else {
-			return $this->data;
+
+    } elseif ($this->data instanceof Collection) {
+      return $this->data->toArray();
+
+    } elseif ($this->data instanceof Tablefy) {
+      return $this->data->getJSON();
+
+    } else {
+      return $this->data;
 		}
 	}
 	public function with($key, $value)
@@ -218,7 +226,7 @@ class Response
 	{
 		if (route()->current() !== null) {
 			route()->current()->terminate();
-		}
+    }
 		if (request()->ajax()) {
 			if ($this->format == 'redirect') {
 				$this->with('success', $this->responseStatus);
@@ -237,10 +245,10 @@ class Response
 			}
 		}
 		if (!empty($this->withs)) {
-			session()->write('with', json_encode($this->withs));
+			session()->write('with', JSON::encode($this->withs));
 		}
 		if (!empty($this->withsInput)) {
-			session()->write('withsInput', json_encode($this->withsInput));
+			session()->write('withsInput', JSON::encode($this->withsInput));
 		}
 		if ($this->format == 'redirect' && !empty($this->urlRedirect)) {
 			header('location: ' . $this->urlRedirect);
@@ -254,7 +262,7 @@ class Response
 				header($cmd);
 			}
 		}
-		if ($this->theme->isLoad()) {
+		if (!empty($this->theme) && $this->theme->isLoad()) {
 			return $this->theme;
     }
     if($this->format == 'download') {
@@ -262,7 +270,7 @@ class Response
       exit;
     }
 		if ($this->format == 'json') {
-			return json_encode($this->getData());
+			return JSON::encode($this->getData());
 		}
 		return $this->getData();
 	}

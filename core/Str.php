@@ -33,4 +33,7 @@ class Str {
     $snakeCaseText = strtolower(implode('_', $words));
     return $snakeCaseText;
   }
+  function __toString() {
+    return $this->text;
+  }
 }

@@ -124,6 +124,12 @@ class Builder
         $this->dbconnect->engine()->update($values);
         return $this->get();
     }
+    public function delete()
+    {
+        $this->action = 'delete';
+        $this->dbconnect->engine()->delete();
+        return $this->get()->get();
+    }
     public function get()
     {
         $builder = $this->applyScopes();

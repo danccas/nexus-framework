@@ -1,6 +1,7 @@
 <?php
 namespace Core\Concerns;
 
+use Core\JSON;
 
 trait HasAttributes
 {
@@ -596,11 +597,11 @@ trait HasAttributes
      */
     protected function asJson($value)
     {
-        return json_encode($value);
+        return JSON::encode($value);
     }
     public function fromJson($value, $asObject = false)
     {
-        return json_decode($value, ! $asObject);
+        return JSON::decode($value, ! $asObject);
     }
 
     /**

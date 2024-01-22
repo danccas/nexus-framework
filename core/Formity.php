@@ -3,6 +3,7 @@
 namespace Core;
 
 use Core\FormityField;
+use Core\JSON;
 
 class Formity
 {
@@ -362,7 +363,7 @@ class Formity
   function disableField($key, $b = true)
   {
     if ($this->mform->is_ajax) {
-      $this->mform->ajax_response[] = "formity_set_disable('" . $this->getNameRequest() . "', " . json_encode($b) . ");";
+      $this->mform->ajax_response[] = "formity_set_disable('" . $this->getNameRequest() . "', " . JSON::encode($b) . ");";
     }
     $this->fields[$key]->disabled = $b;
   }
@@ -434,7 +435,7 @@ class Formity
           return $this->children->getData($onlySet);
         }
       }
-      #echo $n->key . ':' . $n->extra . ($n->seteo ? 1 : 0) . ' => ' . json_encode($n->value) . "<br />";
+      #echo $n->key . ':' . $n->extra . ($n->seteo ? 1 : 0) . ' => ' . JSON::encode($n->value) . "<br />";
       return $n->value;
     }, $fields);
 

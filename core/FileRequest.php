@@ -23,6 +23,7 @@ class FileRequest
         move_uploaded_file($ff['tmp_name'], $dest);
       } else {
         $terminal->scp_send($ff['tmp_name'], $dest);
+        $terminal->exec('exit');
       }
     }
   }
@@ -36,6 +37,12 @@ class FileRequest
   public function i($index) {
     $this->index = $index;
     return $this;
+  }
+  public function extension() {
+    return $this->getClientOriginalExtension();
+  }
+  public function getClientMimeType() {
+    return null;
   }
   public function getClientOriginalExtension() {
         $name = $this->files[$this->index]['name'];

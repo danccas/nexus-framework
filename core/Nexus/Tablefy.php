@@ -51,6 +51,8 @@ class Tablefy implements \JsonSerializable
 
     protected $_view = null;
 
+    protected $listCbs = [];
+
 
     public function __construct()
     {
@@ -217,10 +219,21 @@ class Tablefy implements \JsonSerializable
         }
         return $this->events[$column][$event];
     }
+    public function callback($name, $cb) {
+      $this->listCbs[$name] = $cb;
+      return $this;
+    }
     private function prepare()
     {
       if (method_exists($this, 'actionsByRow')) {
+        $ce = $this;
+        $this->listCbs['actionsByRow'] = function($row) use($ce) { return $ce->actionsByRow($row); };
+      }
+      if(!empty($this->listCbs['actionsByRow'])) {
         $this->actions = true;
+      }
+      if(empty($this->directRoute)) {
+        $this->directRoute = route()->current();
       }
        $this->prepareColumns();
         if (method_exists($this, 'bulkActions')) {
@@ -478,9 +491,9 @@ class Tablefy implements \JsonSerializable
 
         $ce = &$this;
 
-        if (method_exists($this, 'actionsByRow')) {
+        if (!empty($this->listCbs['actionsByRow'])) {
           $this->items->map(function($row) use ($ce) {
-            $acts = $this->actionsByRow($row);
+            $acts = ($this->listCbs['actionsByRow'])($row);
             if(!empty($acts)) {
               foreach ($acts as $key => $f) {
                 $f->setIndex('row' . $key)->prepare($this);
@@ -673,8 +686,14 @@ class Tablefy implements \JsonSerializable
     }
     public function toArray()
     {
-        $this->execute();
-        $response = [
+      $this->execute();
+
+      $listado = !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [];
+      $listado = array_map(function($n) {
+        return is_object($n) ? (method_exists($n, 'toArray') ? $n->toArray() : ((array) $n)) : $n;
+      }, $listado);
+      $listado = utf8ize($listado);
+      $response = [
             'success' => true,
             'result' => [
                 //'querys' => $this->querys,
@@ -697,17 +716,20 @@ class Tablefy implements \JsonSerializable
                 'page_next' => $this->page_next,
                 'actions' => $this->actions,
                 'actions_group' => $this->actions_group,
-                'items' => !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [],
+                'items' => $listado,
             ]
-        ];
+      ];
         if (!empty($this->listHeaders)) {
             $response['result']['order_columns'] = $this->listHeaders;
         }
         return $response;
     }
+    public function getJSON() {
+      return $this->toArray();
+    }
     #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
-        return $this->toArray();
+      return $this->getJSON();
     }
 }

@@ -31,6 +31,9 @@ class Request {
     public function file($name) {
       return $this->files->{$name};
     }
+    public function hasFile($key) {
+      return $this->files->hasFile($key);
+    }
     public function capture() {
       $this->files = new FilesBag($_FILES);
 			$this->_ajax   = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
@@ -39,7 +42,7 @@ class Request {
 			  }
 			if(!empty($_REQUEST['_method'])) {
 				$method_static = strtoupper($_REQUEST['_method']);
-				if(in_array($method_static, ['PUT'])) {
+				if(in_array($method_static, ['PUT','DELETE'])) {
 					if($this->_method != $method_static) {
 						$this->_method = $method_static;
 					}

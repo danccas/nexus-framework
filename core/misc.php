@@ -1,6 +1,7 @@
 <?php
 
 use App\Auth;
+use Core\JSON;
 
 function csrf_token()
 {
@@ -17,6 +18,16 @@ if (!function_exists('byteConvert')) {
     return round($bytes / pow(1024, $e), 2) . $s[$e];
   }
 }
+function utf8ize($d) {
+        if (is_array($d)) {
+            foreach ($d as $k => $v) {
+                $d[$k] = utf8ize($v);
+            }
+        } else if (is_string ($d)) {
+            return utf8_encode($d);
+        }
+        return $d;
+    }
 function is_type($val, $type)
 {
   if ($type == 'int') {
@@ -52,6 +63,13 @@ function dd($data)
   echo "<pre style='color:green;background:#000;padding:10px;'>";
   print_r($data);
   exit;
+}
+function old($name, $coalesce = null) {
+  $val = request()->input($name);
+  if($val === null) {
+    return $coalesce;
+  }
+  return $val;
 }
 function config($key)
 {
@@ -223,7 +241,10 @@ function response()
 {
   return Core\Response::instance();
 }
-function blade()
+function blade() {
+  return Core\Blade::instance();
+}
+function blade2()
 {
   return response()->blade();
 }
@@ -366,14 +387,14 @@ function debug($x)
 }
 function codificar($t)
 {
-  $t = is_array($t) ? '@' . json_encode($t) : $t;
+  $t = is_array($t) ? '@' . JSON::encode($t) : $t;
   return base64_encode($t);
 }
 function decodificar($t)
 {
   $t = base64_decode($t);
   if (substr($t, 0, 1) == '@') {
-    return json_decode(substr($t, 1), true);
+    return JSON::decode(substr($t, 1), true);
   }
   return $t;
 }
@@ -400,7 +421,7 @@ function Popup_close($e = null)
 function Popup_error($e = null)
 {
   echo 'Popup-error ';
-  echo is_array($e) ? json_encode($e) : $e;
+  echo is_array($e) ? JSON::encode($e) : $e;
   exit;
 }
 function Popup_refresh($e = null)
@@ -531,7 +552,7 @@ function return_json($data, $pagination = null)
       'pagination' => $pagination,
     );
   }
-  echo json_encode($data);
+  echo JSON::encode($data);
   exit;
 };
 function array_group_by($a, $b)
@@ -612,7 +633,7 @@ function process_join_arrays($base, $keys, &$error = '')
 {
   if (!array_keys_required($base, $keys, $error)) {
     return $error = null;
-    $error = 'falta: ' . json_encode($error);
+    $error = 'falta: ' . JSON::encode($error);
     return false;
   }
   #  $keys = array_values($keys);
@@ -764,7 +785,7 @@ function _log()
   $argx = func_get_args();
   $file = $argx[0];
   $x = array_map(function ($n) {
-    return is_array($n) ? json_encode($n) : $n;
+    return is_array($n) ? JSON::encode($n) : $n;
   }, $argx);
   $x = implode("\n", $x);
   $out = date('d-m-Y h:i A') . ': ' . trim($x) . "\n";

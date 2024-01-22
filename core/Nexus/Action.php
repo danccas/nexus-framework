@@ -15,6 +15,7 @@ class Action implements \JsonSerializable {
   protected $cb    = null;
   protected $response = null;
   protected $ajax  = false;
+  protected $attrs = [];
 
   function __construct($title = null) {
     if(!is_null($title)) {
@@ -23,6 +24,10 @@ class Action implements \JsonSerializable {
   }
   public function click($callback) {
     $this->cb = $callback;
+    return $this;
+  }
+  public function attr($key, $value) {
+    $this->attrs[$key] = $value;
     return $this;
   }
   public function handle($model) {
@@ -66,6 +71,7 @@ class Action implements \JsonSerializable {
       'icon'  => $this->icon,
       'link'  => $this->link,
       'ajax'  => $this->ajax,
+      'attrs' => $this->attrs,
     ]);
   }
 

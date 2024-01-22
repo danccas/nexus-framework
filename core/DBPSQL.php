@@ -4,6 +4,7 @@ namespace Core;
 
 use Core\ElegantException;
 use Core\DBFuncs;
+use Core\JSON;
 
 class DBPSQL
 {
@@ -64,12 +65,16 @@ class DBPSQL
         $this->action = 'update';
         $this->prepares = $data;
     }
+    public function delete()
+    {
+        $this->action = 'delete';
+    }
 
     public function prepareQuery()
     {
         $ce = $this;
         $ce->prepares_mod = [];
-        if (!empty($this->wheres) && in_array($this->action, ['get', 'update'])) {
+        if (!empty($this->wheres) && in_array($this->action, ['get', 'update','delete'])) {
             $this->wheres = array_map(function ($n) use ($ce) {
                 $uu = 'v' . uniqid();
                 if (is_null($n[2])) {
@@ -111,6 +116,14 @@ class DBPSQL
                 $rp1 .= 'WHERE ' . implode(' AND ', $this->wheres) . "\n";
             }
             return [$rp1, array_merge($this->prepares_mod, $datalist)];
+
+        } elseif ($this->action == 'delete') {
+            $rp = 'DELETE FROM ' . implode(', ', $this->tables) . "\n";
+            if (!empty($this->wheres)) {
+                $rp .= 'WHERE ' . implode(' AND ', $this->wheres) . "\n";
+            }
+            return [$rp, $this->prepares_mod];
+
         } elseif ($this->action == 'get') {
             $rp = 'SELECT ' . (empty($this->selects) ? '*' : implode(', ', $this->selects)) . "\n";
             $rp .= 'FROM ' . implode(', ', $this->tables) . "\n";
@@ -154,7 +167,7 @@ class DBPSQL
             $result = $connect->prepare($query);
             $rp = $result->execute($prepare);
         } catch (\Exception $e) {
-            $this->central->except('Query: ' . $query . '<br>' . json_encode($prepare), $e);
+            $this->central->except('Query: ' . $query . '<br>' . JSON::encode($prepare), $e);
             #       } catch (ElegantException $e) {
             #         echo $e;
             //if( DEVEL_MODE ){

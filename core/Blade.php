@@ -3,6 +3,7 @@
 namespace Core;
 
 use Exception;
+use Core\JSON;
 
 class Blade
 {
@@ -173,7 +174,7 @@ class Blade
     }
     public static function log($text) {
       if(static::$is_verbose) {
-        return '<!-- ' . (is_array($text) ? json_encode($text) : $text) . ' -->';
+        return '<!-- ' . (is_array($text) ? JSON::encode($text) : $text) . ' -->';
       } else {
         return '';
       }
@@ -203,11 +204,15 @@ class Blade
             'cache' => $cache,
         ];
     }
-
+    public function pass($key, $val) {
+      return $this->setHeredados([$key => $val]);
+    }
     public function setHeredados($data)
     {
-        $this->heredados = $data ?? [];
-        return $this;
+      if(is_array($data)) {
+        $this->heredados = array_merge($this->heredados, ($data ?? []));
+      }
+      return $this;
     }
     public function getHeredados()
     {
@@ -228,7 +233,8 @@ class Blade
                 $th = (new Blade($res['name'], false));
                 $rp = '';
                 if (!empty($res['params'])) {
-                    $rp = static::log("vars:" . $res['params']) . "\n<?php extract(" . $res['params'] . "); ?>";
+                  //static::instance()->setHeredados();
+                  $rp = static::log("vars:" . $res['params']) . "\n<?php extract(" . $res['params'] . "); ?>";
                 }
                 $rp .= $th->precompile();
                 return $rp;
@@ -237,7 +243,7 @@ class Blade
                 static::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
                 static::preCoding('scripts', '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
-                    . 'var ' . $tuq . " = new Tablefy(<?= json_encode(array_merge(" . $res['params'] . ", [
+                    . 'var ' . $tuq . " = new Tablefy(<?= \Core\JSON::encode(array_merge(" . $res['params'] . ", [
                         'dom' => '#" . $tuq . "',
                         'request' => array(
                             'url' => '" . route($res['name']) . "',
@@ -282,7 +288,7 @@ class Blade
             return  "<?= \Core\Blade::partViewCall('" . $res['name'] . "'); ?>";
         }, $html);
 
-        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\=\,\/\w\\\:\(\)\_\>\-\"\'\[\]]+)\)\n/", function($res) {
+        $html = preg_replace_callback("/@foreach\s*\(\s*(?<for>[\s\&\$\=\,\/\w\\\:\(\)\.\_\>\-\"\'\[\]]+)\)\n/", function($res) {
             return  "<?php foreach(" . $res['for'] . ") { ?>\n";
         }, $html);
 
