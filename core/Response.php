@@ -62,7 +62,7 @@ class Response
 		504 => 'HTTP/1.1 504 Gateway Time-out',
 		505 => 'HTTP/1.1 505 HTTP Version Not Supported',
 	);
-	private $withs = [];
+	private $withsOnlys = [];
 	private $withsInput = [];
   private $pathFile = null;
 	private static $instance;
@@ -214,7 +214,7 @@ class Response
 	}
 	public function with($key, $value)
 	{
-		$this->withs[$key] = $value;
+		$this->withsOnlys[$key] = $value;
 		return $this;
 	}
 	public function withInputs()
@@ -233,7 +233,7 @@ class Response
 				$data = array_merge([
 					'data'     => $this->getData(),
 					'inputs'   => $this->withsInput,
-				], $this->withs);
+				], $this->withsOnlys);
 				if (!empty($this->urlRedirect) && $this->responseStatus) {
 					if ($this->urlRedirect == $this->getPreviousUrl()) {
 						$data['close'] = true;
@@ -243,13 +243,16 @@ class Response
 				}
 				$this->json($data);
 			}
+    }
+    if (!empty($this->withsOnlys)) {
+      foreach($this->withsOnlys as $key => $val) {
+        session()->write($key, JSON::encode($val));
+      }
+			//session()->write('with', JSON::encode($this->withsOnlys));
 		}
-		if (!empty($this->withs)) {
-			session()->write('with', JSON::encode($this->withs));
-		}
-		if (!empty($this->withsInput)) {
-			session()->write('withsInput', JSON::encode($this->withsInput));
-		}
+    if (!empty($this->withsInput)) {
+      session()->write('withsInput', JSON::encode($this->withsInput));
+    }
 		if ($this->format == 'redirect' && !empty($this->urlRedirect)) {
 			header('location: ' . $this->urlRedirect);
 		}

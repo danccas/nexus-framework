@@ -110,8 +110,8 @@ class FormityField
       #      $this->extra = 'autocomplete';
 
 		} elseif ($this->extra == 'autocomplete') {
-      blade()->asset('/assets/js/jquery-ui.min.js');
-      blade()->asset('/assets/css/jquery-ui.min.css');
+      blade()->asset('/assets/libs/jquery-ui/jquery-ui.min.js');
+      blade()->asset('/assets/libs/jquery-ui/jquery-ui.min.css');
     } elseif ($this->type == 'panel') {
       blade()->asset('/js/formity.panel.js', 'formity.panel');
     } elseif ($this->type == 'tree') {
@@ -217,6 +217,12 @@ class FormityField
   {
     $this->length_step = $n;
     return $this;
+  }
+  function min($n) {
+    return $this->setMin($n);
+  }
+  function max($n) {
+    return $this->setMax($n);
   }
   function setMin($n)
   {
@@ -615,7 +621,7 @@ class FormityField
         }
       }
       if (!empty($this->required) || (empty($this->required) && (!is_null($value) || $value != ''))) {
-        if (strlen($value) < $this->length_min) {
+        if (strlen(strval($value)) < $this->length_min) {
           $this->_error[] = 'El mínimo de caracteres ingresados en ' . $this->name . ' debe ser ' . $this->length_min;
         }
       }
@@ -679,6 +685,7 @@ class FormityField
       }, $this->depend));
     }
     $class = array();
+    //$attrs['extra'] = $this->extra;
     if (!empty($this->disabled)) {
       $attrs['data-disables'] = 'formity';
       $attrs['disabled'] = 'true'; //TODO
@@ -693,7 +700,7 @@ class FormityField
       if (!is_null($this->length_max)) {
         $attrs['max'] = $this->length_max;
       }
-    } elseif (in_array($this->extra, array('text', 'textarea'))) {
+    } elseif (in_array($this->extra, array('text', 'textarea','password'))) {
       if (!is_null($this->length_min)) {
         $attrs['minlength'] = $this->length_min;
       }
@@ -753,12 +760,12 @@ class FormityField
     if ($this->extra == 'autocomplete') {
       $extra = 'text';
       if ($this->type == 'input') {
-        $h .= '<input type="hidden" name="' . $keyw . '" id="val_' . $this->getNameRequest() . '" value="' . htmlentities($this->getValue()) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
-        $h .= '<input type="' . $this->type . '" id="ip_' . $this->getNameRequest() . '" value="' . htmlentities($this->getLabel()) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
+        $h .= '<input type="hidden" name="' . $keyw . '" id="val_' . $this->getNameRequest() . '" value="' . htmlentities(strval($this->getValue())) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
+        $h .= '<input type="' . $this->type . '" id="ip_' . $this->getNameRequest() . '" value="' . htmlentities(strval($this->getLabel())) . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '" />';
       } else {
         $h .= '<textarea name="' . $keyw . '" id="ip_' . $this->getNameRequest() . '" ' . $attrs . ' data-name="' . $this->name . '" placeholder="' . $this->name . '">' . @htmlentities($this->value) . '</textarea>';
       }
-			$h .= "<script> require('/assets/js/jquery-ui.min.js', function() { console.log('CARGADO DE AUTOCOMPLETE'); $('#ip_" . $this->getNameRequest() . "').autocomplete({ source: function (request, response) { \n";
+			$h .= "<script> require('/assets/libs/jquery-ui/jquery-ui.min.js', function() { $('#ip_" . $this->getNameRequest() . "').autocomplete({ source: function (request, response) { \n";
 			$uri = $this->mform->url->query('aip', $this->getNameRequest())->link();
       $h .= "$.ajax({ type: \"POST\", url: \"" . $uri . "&term=\" + request.term,";
       $h .= "data: new FormData($(\"[data-id='" . $this->mform->id . "']\")[0]), contentType: false, processData: false, success: response, dataType: 'json' }); }, minLength: 2, ";

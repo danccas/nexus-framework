@@ -78,18 +78,14 @@ class Builder
         $this->where($this->model->getPrimaryKey(), '=', $pk);
         return $this;
     }
-    public function where($a, $b, $c = '__NODEFINIDO__')
+    public function where($a, $b = '__NODEFINIDO__', $c = '__NODEFINIDO__')
     {
-        if ($c == '__NODEFINIDO__') {
-            $this->dbconnect->engine()->where($a, '=', $b);
-        } else {
-            $this->dbconnect->engine()->where($a, $b, $c);
-        }
+        $this->dbconnect->engine()->where($a, $b, $c);
         return $this;
     }
     public function whereNull($a)
     {
-        $this->dbconnect->engine()->where($a, ' is NULL');
+        $this->dbconnect->engine()->whereRaw($a . ' IS NULL');
         return $this;
     }
     public function orderBy($campo, $by = 'ASC')

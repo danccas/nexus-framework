@@ -92,12 +92,12 @@ class Kernel
     }
     public function getRoutes()
     {
-        return $this->routes;
+        return array_filter($this->routes, function($r) { return !$r->isDraft(); });
     }
     public function getRoutesNames()
     {
         $rp = [];
-        foreach ($this->routes as $r) {
+        foreach ($this->getRoutes() as $r) {
             if (!empty($r)) {
                 $name = $r->getName();
                 if (!empty($name)) {
@@ -109,7 +109,7 @@ class Kernel
     }
     public function findRoute($name)
     {
-        foreach ($this->routes as $k => $e) {
+        foreach ($this->getRoutes() as $k => $e) {
             if ($e->compare($name)) {
                 return $e;
             }
@@ -139,7 +139,7 @@ class Kernel
         echo "<table border=\"1\">";
         echo "<thead><tr><th>Context</th><th>Method</th><th>Midd</th><th>Route</th><th>Controller</th><th>Name</th><th>Arguments</th><th>V.Method</th><th>V.Route</th><th>V.Controller</th><th>V.Arguments</th></tr></thead>";
         echo "<tbody>";
-        foreach ($this->routes as $e) {
+        foreach ($this->getRoutes() as $e) {
             echo "<tr>";
             echo "<td>" . $e->getContext() . "</td>";
             $rp[] = array($e, $e->isMatch($request) ? 'CUMPLE' : 'No');
@@ -165,7 +165,7 @@ class Kernel
         $is_match = false;
         $request = new Request;
         $response = Response::instance();
-        foreach ($this->routes as $e) {
+        foreach ($this->getRoutes() as $e) {
           if ($e->isMatch($request)) {
                 $is_match = true;
                 $request->route = $e;

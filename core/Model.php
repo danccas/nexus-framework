@@ -84,13 +84,20 @@ class Model implements \JsonSerializable
         return $dd->first();
     }
 
-    public static function where($key, $compare, $value = null)
+    public static function where($key, $compare = '__NODEFINIDO__', $value = '__NODEFINIDO__')
     {
-        if (is_null($value)) {
-            $value = $compare;
-            $compare = '=';
-        }
         return static::query()->where($key, $compare, $value);
+    }
+    public static function updateOrCreate($wheres, $modifys) {
+      if(!is_array($wheres) || !is_array($modifys)) {
+        return false;
+      }
+      $first = static::where($wheres)->first();
+      if(!empty($first)) {
+        return $first->update($modifys);
+      } else {
+        return static::create(array_merge($wheres, $modifys));
+      }
     }
     public static function whereNull($key)
     {
@@ -150,7 +157,9 @@ class Model implements \JsonSerializable
             $this->exists = true;
         }
         foreach ($attributes as $key => $value) {
+          //if ($this->isFillable($key)) {
             $this->setAttribute($key, $value);
+          //}
         }
         return $this;
         foreach ($this->fillableFromArray($attributes) as $key => $value) {

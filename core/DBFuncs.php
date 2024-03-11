@@ -39,6 +39,8 @@ class DBFuncs
               $value = null;
             } elseif($value === '') {
               $value = null;
+            } elseif(is_array($value)) {
+              $value = '{"' . implode('","', $value) . '"}';
             }
             $n['value'] = $value;
             $value = $n;

@@ -14,6 +14,7 @@ class Route
     protected $is_relationalMiddleware = false;
     public static $indexes = 0;
     private static $_current = null;
+    public static  $pendingGroup = null;
     public $method;
     private $prepared;
     public $regex; ##TODO
@@ -25,21 +26,36 @@ class Route
     private $url;
     private $father;
     private $name = [];
-    private $permission;
+    private $permission = [];
     private $parameters = [];
     private $request_params = [];
     protected $middlewares = [];
     protected $wheres = [];
     protected $withs = [];
     protected $querys = [];
+    private $is_draft = true;
 
     function __construct()
     {
         $this->id = ++static::$indexes;
         if (Application::instance()->canRegisterRoute()) {
-            $this->context = str_replace('.php', '', basename(Application::instance()->currentConfigRoute()));
-            Kernel::instance()->registerRoute($this);
+          $this->context = str_replace('.php', '', basename(Application::instance()->currentConfigRoute()));
+          if(!empty(static::$pendingGroup)) {
+            $this->copy(static::$pendingGroup);
+          }
+          Kernel::instance()->registerRoute($this);
         }
+    }
+    public static function init() {
+      return new static;
+    }
+    private function copy($original) {
+      $this->method = $original->method;
+      $this->prepared = $original->prepared;
+      $this->name     = $original->name;
+      if(!empty($original->permission)) {
+        $this->permission = array_merge($this->permission, $original->permission);
+      }
     }
     public static function current()
     {
@@ -90,15 +106,19 @@ class Route
     }
     public function getLabels()
     {
-        $rp = [];
-        $rp[] = $this->name;
-        $rp[] = $this->permission;
+      $rp = [];
+      foreach($this->name as $r) {
+        $rp[] = $r;
+      }
+      foreach($this->permission as $p) {
+        $rp[] = $p;
+      }
         $rp = array_filter($rp);
         return $rp;
     }
     public function permission($name)
     {
-        $this->permission = $name;
+        $this->permission[] = $name;
         return $this;
     }
     public function getPermission()
@@ -409,8 +429,9 @@ class Route
     }
     public function setRegex($regex)
     {
-        $this->regex = trim($regex, '/');
-        return $this;
+      $this->is_draft = false;
+      $this->regex = trim($regex, '/');
+      return $this;
     }
     public function setPrepared($prepared)
     {
@@ -455,6 +476,14 @@ class Route
     public static function exists($name)
     {
         return kernel()->findRoute($name) !== null;
+    }
+    public function isDraft() {
+      return $this->is_draft;
+    }
+    public function group($callback) {
+      static::$pendingGroup = $this;
+      $callback();
+      static::$pendingGroup = null;
     }
     private static function __request($method, $a1, $a2, $a3 = null)
     {

@@ -6,7 +6,7 @@ class Clock
 {
     protected $moment;
     protected $current;
-    protected static $DIAS = ['Lunes', 'Martes', 'Miercoles', 'Juevaes', 'Viernes', 'Sabado', 'Domingo'];
+    protected static $DIAS = ['Domingo','Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
 		protected static $MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 		protected $data;
 

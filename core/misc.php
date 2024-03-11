@@ -3,6 +3,9 @@
 use App\Auth;
 use Core\JSON;
 
+function csrf_field() {
+  return null;
+}
 function csrf_token()
 {
   return null;
@@ -182,7 +185,7 @@ function can_do($context, $action, $seconds, $times = 1)
 }
 function user()
 {
-  return App\Auth::instance();
+  return App\Auth::current();
 }
 function session()
 {

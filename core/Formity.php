@@ -18,6 +18,9 @@ class Formity
 
   public $mform = null;
 
+  private $is_render_header = false;
+  private $is_render_footer = false;
+
   
   public static function exists($cdr)
   {
@@ -111,6 +114,17 @@ class Formity
     $this->token = date('z'); //Formity::hash($cdr);
     $this->nToken = Formity::hash($cdr);
     $this->isSession = 'sess_' . $cdr;
+
+
+    $cloud = session()->read('formity_errors');
+    if(!empty($cloud)) {
+      $cloud = JSON::parse($cloud, true);
+      if(!empty($cloud) && !empty($cloud[$this->id])) {
+        foreach($cloud[$this->id] as $e) {
+          $this->setError($e);
+        }
+      }
+    }
   }
   public function setSecurity($x)
   {
@@ -149,14 +163,31 @@ class Formity
     $this->method = $method;
     return $this;
   }
-  function setError($e)
+  function setError($message)
   {
-    if (empty($e)) {
+    if (empty($message)) {
       return $this;
     }
-
+    $this->_error[] = $message;
     $this->is_valid = false;
+
+    $cloud = session()->read('formity_errors');
+    if(!empty($cloud)) {
+      $cloud = JSON::parse($cloud, true);
+    }
+    if(empty($cloud)) {
+      $cloud = [];
+    }
+    if(empty($cloud[$this->id])) {
+      $cloud[$this->id] = [];
+    }
+    $cloud[$this->id][] = $message;
+    session()->write('formity_errors', JSON::stringify($cloud));
     return $this;
+  }
+  function error() {
+    session()->delete('formity_errors');
+    return $this->_error;
   }
   function myRequest($request)
   {
@@ -250,20 +281,20 @@ class Formity
       if (isset($values[$key]) || is_null($values[$key])) {
         if ($field->isForm()) {
           if ($field->required && empty($values[$key])) {
-            $form->_error[] = $field->name . ': Es requerido';
+            $form->setError($field->name . ': Es requerido');
           } elseif (!(!$field->required && empty($values[$key]))) {
             //          $field->seteo = true;
             if (!empty($field->childrang)) {
               //echo "viene2222>>>";
               $error = null;
               if (!$field->declareChildren(count($values[$key]), $error)) {
-                $form->_error[] = $field->name . ': Debe contener desde ' . $field->getMin() . ' hasta ' . $field->getMax() . ' elementos, no ' . count($values[$key]);
+                $form->setError($field->name . ': Debe contener desde ' . $field->getMin() . ' hasta ' . $field->getMax() . ' elementos, no ' . count($values[$key]));
               } else {
                 foreach ($field->children as $k2 => $c) {
                   Formity::myform_set_values($c, $values[$key][$k2], $force, $nivel + 1, $change);
                   if (!empty($c->_error)) {
                     foreach ($c->_error as $e) {
-                      $form->_error[] = $field->name . ' #' . ($k2 + 1) . ': ' . $e;
+                      $form->setError($field->name . ' #' . ($k2 + 1) . ': ' . $e);
                     }
                   }
                 }
@@ -296,9 +327,6 @@ class Formity
 		$error = null;
 		return $this->isValid($error);
 	}
-	function error() {
-		return $this->_error;
-	}
   function addField($key, $type = 'input:text', $analyze = null)
   {
     $div = ':';
@@ -313,6 +341,19 @@ class Formity
       return false;
     }
     return $this->fields[$keyz] = new FormityField($this, $key, $type, $analyze);
+  }
+  public function withRequest() {
+    $preData = request()->inputs();
+    if(!empty($preData)) {
+      $data = Formity::RequestToValues($this, $preData);
+      if(!empty($data)) {
+        Formity::myform_set_values($this, $data, false, 0, false);
+      }
+    }
+    return $this;
+  }
+  function fill($data) {
+    return $this->setPreData($data);
   }
   function setPreData($data, $force = true)
   {
@@ -363,7 +404,7 @@ class Formity
   function disableField($key, $b = true)
   {
     if ($this->mform->is_ajax) {
-      $this->mform->ajax_response[] = "formity_set_disable('" . $this->getNameRequest() . "', " . JSON::encode($b) . ");";
+      $this->mform->ajax_response[] = "formity_set_disable('" . $this->getNameRequest() . "', " . JSON::stringify($b) . ");";
     }
     $this->fields[$key]->disabled = $b;
   }
@@ -435,7 +476,7 @@ class Formity
           return $this->children->getData($onlySet);
         }
       }
-      #echo $n->key . ':' . $n->extra . ($n->seteo ? 1 : 0) . ' => ' . JSON::encode($n->value) . "<br />";
+      #echo $n->key . ':' . $n->extra . ($n->seteo ? 1 : 0) . ' => ' . JSON::stringify($n->value) . "<br />";
       return $n->value;
     }, $fields);
 
@@ -485,19 +526,27 @@ class Formity
     $this->url = $url;
     return $this;
   }
+  function method($m) {
+    $this->method = $m;
+    return $this;
+  }
   function begin($attrs = [])
   {
     if(empty($this->url)) {
       $this->url = route()->current();
     }
-    return $this->buildHeader('POST', $this->url, $attrs);
+    return $this->buildHeader($this->method, $this->url, $attrs);
 	}
 	function attr($key, $value) {
 		$this->attrs[$key] = $value;
 		return $this;
 	}
   function buildHeader($method = 'POST', $url = null, $attrs = [])
-	{
+  {
+    if($this->is_render_header) {
+      return null;
+    }
+    $this->is_render_header = true;
 		$attrs = array_merge($this->attrs, $attrs);
     $attrs['id'] = $this->id;
     $attrs['data-id'] = $this->id;
@@ -541,6 +590,9 @@ class Formity
     $html .= '</form>';
     return $html;
   }
+  function buttons() {
+    return $this->buildButtons();
+  }
   function buildButtons()
   {
     $html = $this->message;
@@ -564,15 +616,33 @@ class Formity
         $rp .= '</div>';
       } */
     }
-    if (!empty($form->_error)) {
+    $rp .= '<div style="padding: 4px 4px;padding-bottom: 0;">';
+
+    $rp .= $form->body();
+    #    $rp .= '<div class="columns is-multiline">';
+    if ($nivel == 0 && !$onlyFields) {
+      $rp .= '<div class="column is-12" style="margin-top: 15px;text-align: right;font-size: 12px;">';
+      $rp .= $form->buildButtons();
+      $rp .= '</div>';
+      $rp .= $form->end();
+    }
+    $rp .= '</div>';
+    #    $rp .= '</div>';
+    return $rp;
+  }
+  public function body() {
+    $form = $this;
+    $rp = '';
+
+    $errors = $form->error();
+    if (!empty($errors)) {
       $rp .= '<article class="message is-danger"><div class="message-header">Debes seguir estas indicaciones:</div>';
       $rp .= '<div class="message-body"><div class="content"><ul style="margin-top:0px;">';
-      foreach ($form->_error as $e) {
+      foreach ($errors as $e) {
         $rp .= "<li>" . $e . "</li>\n";
       }
       $rp .= "</ul></div></div></article>";
     }
-    $rp .= '<div style="padding: 4px 4px;padding-bottom: 0;">';
     #    $rp .= '<div class="columns is-multiline">';
     foreach ($form->getFields() as $key => $field) {
       if (!$field->isForm()) {
@@ -604,14 +674,6 @@ class Formity
       #      $rp .= '</div>';
       $rp .= '</div>';
     }
-    if ($nivel == 0 && !$onlyFields) {
-      $rp .= '<div class="column is-12" style="margin-top: 15px;text-align: right;font-size: 12px;">';
-      $rp .= $form->buildButtons();
-      $rp .= '</div>';
-      $rp .= $form->end();
-    }
-    $rp .= '</div>';
-    #    $rp .= '</div>';
     return $rp;
   }
   function renderFormity()

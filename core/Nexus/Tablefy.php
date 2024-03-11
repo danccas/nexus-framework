@@ -692,7 +692,6 @@ class Tablefy implements \JsonSerializable
       $listado = array_map(function($n) {
         return is_object($n) ? (method_exists($n, 'toArray') ? $n->toArray() : ((array) $n)) : $n;
       }, $listado);
-      $listado = utf8ize($listado);
       $response = [
             'success' => true,
             'result' => [

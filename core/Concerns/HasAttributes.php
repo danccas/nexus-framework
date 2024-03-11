@@ -387,12 +387,10 @@ trait HasAttributes
      */
     protected function castAttribute($key, $value)
     {
-        $castType = $this->getCastType($key);
-
+      $castType = $this->getCastType($key);
         if (is_null($value) && in_array($castType, static::$primitiveCastTypes)) {
             return $value;
         }
-
         switch ($castType) {
             case 'int':
             case 'integer':
@@ -412,7 +410,7 @@ trait HasAttributes
                 return $this->fromJson($value, true);
             case 'array':
             case 'json':
-                return $this->fromJson($value);
+              return $this->fromJson($value);
             case 'collection':
                 return new Collection($this->fromJson($value));
             case 'date':
@@ -459,6 +457,9 @@ trait HasAttributes
      */
     public function getCastType($key)
     {
+      if(!isset($this->getCasts()[$key])) {
+        return null;
+      }
         if ($this->isCustomDateTimeCast($this->getCasts()[$key])) {
             return 'custom_datetime';
         }
@@ -487,7 +488,7 @@ trait HasAttributes
     }
     public function setAttribute($key, $value)
     {
-			$this->attributes[$key] = $value;
+			$this->attributes[$key] = $this->castAttribute($key, $value);
       return $this;
 		}
 		public function setChange($key, $value)
@@ -601,6 +602,9 @@ trait HasAttributes
     }
     public function fromJson($value, $asObject = false)
     {
+      if(is_array($value)) {
+        return $value;
+      }
         return JSON::decode($value, ! $asObject);
     }
 
@@ -644,10 +648,11 @@ trait HasAttributes
      */
     protected function asDate($value)
     {
+      return $value;
     }
     protected function asDateTime($value)
     {
-        exit('TODO-asDateTime');
+      return $value;
     }
     protected function isStandardDateFormat($value)
     {
@@ -662,6 +667,7 @@ trait HasAttributes
      */
     public function fromDateTime($value)
     {
+      return $value;
     }
 
     /**

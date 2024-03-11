@@ -19,7 +19,8 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
     {
         if($items instanceof Collection) {
           $this->items = $items->toArray();
-        } else {
+        } else if(is_array($items)) {
+          $items = array_values($items);
             $this->items = $items;
         }
     }
@@ -80,6 +81,7 @@ class Collection implements \ArrayAccess, \Iterator, \Countable, \JsonSerializab
       $this->items = array_filter($this->items, function($n) use($callback) {
             return $callback((object) $n);
       });
+      $this->items = array_values($this->items);
       return $this;
     }
     public function map(callable $callback)

@@ -49,8 +49,8 @@ class Request {
 				}
 			}
 			$this->headers = new HeaderBag(getallheaders());
-			$with = session()->read('withInputs');
-			session()->delete('withInputs');
+      $with = session()->read('withsInput');
+      session()->delete('withsInput');
       $this->_inputs = !empty($_REQUEST) ? $_REQUEST : [];
 
 			if(in_array($this->_method, ['PUT']) && empty($_POST)) {
@@ -74,7 +74,7 @@ class Request {
 				if(!empty($with)) {
 					$this->_inputs = array_merge($this->_inputs, $with);
 				}
-			}
+      }
     }
 		public function link() {
 			return $_SERVER['REQUEST_URI'];
@@ -121,6 +121,9 @@ class Request {
     }
     public function method() {
 			return $this->_method;
+    }
+    public function isMethod($method) {
+      return $this->method() == strtoupper($method);
     }
     public function by($zone) {
         return false;

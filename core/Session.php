@@ -43,6 +43,14 @@ class Session
   {
     return isset($_SESSION[$key]);
   }
+  public static function get($key) {
+    $data = static::read($key);
+    static::delete($key);
+    if($data == null) {
+      return null;
+    }
+    return JSON::decode($data, true);
+  }
   public static function read($key, $child = false)
   {
     if (!is_string($key)) {

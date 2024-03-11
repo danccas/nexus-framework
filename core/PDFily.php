@@ -22,9 +22,9 @@ class Pdf extends TCPDF {
     }
     $this->writeHTMLCell($w = 0, $h = 0, $x = '', $y = '', $this->code_header, $border = 0, $ln = 1, $fill = 0, $reseth = true, $align = 'top', $autopadding = true);
 		$this->SetY(5);
-		$img_file = 'https://www.creainter.com.pe/assets/images/logo.png';#/var/www/html/simaci.com.pe/public/assets2/img/logo-light.png';
-		$this->SetAlpha(0.1);
-		$this->Image($img_file, 50, 85, 200, 0);
+		#$img_file = 'https://www.creainter.com.pe/assets/images/logo.png';#/var/www/html/simaci.com.pe/public/assets2/img/logo-light.png';
+		#$this->SetAlpha(0.1);
+		#$this->Image($img_file, 50, 85, 200, 0);
   }
 
   public function Footer() {

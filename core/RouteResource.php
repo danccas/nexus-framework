@@ -34,8 +34,12 @@ class RouteResource
     function name($name)
     {
         foreach ($this->routes as $k => $r) {
-            if (in_array($k, ['repository'])) {
-                $r->name($name . '.' . $k)->permission($name . '.index');
+            if (in_array($k, ['repository','show'])) {
+              $r->name($name . '.' . $k)->permission($name . '.index');
+            } elseif(in_array($k, ['store'])) {
+              $r->name($name . '.' . $k)->permission($name . '.create');
+            } elseif(in_array($k, ['update'])) {
+              $r->name($name . '.' . $k)->permission($name . '.edit');
             } else {
                 $r->name($name . '.' . $k);
             }

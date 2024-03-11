@@ -46,9 +46,29 @@ class DBPSQL
     {
         $this->tables[] = $table;
     }
-    public function where($a, $b, $c = null)
+    public function where($a, $b = '__NODEFINIDO__', $c = '__NODEFINIDO__')
     {
+      if($b == $c && $b == '__NODEFINIDO__') {
+        if(!is_array($a)) {
+          $this->wheres[] = [$a, '', ''];
+        } else {
+          foreach($a as $k => $v) {
+            if(is_array($v)) {
+              $this->wheres[] = $v;
+            } else {
+              $this->wheres[] = [$k, '=', $v];
+            }
+          }
+        }
+      } else if($c == '__NODEFINIDO__') {
+        $this->wheres[] = [$a, '=', $b];
+      
+      } else {
         $this->wheres[] = [$a, $b, $c];
+      }
+    }
+    public function whereRaw($val) {
+      return $this->where($val);
     }
     public function order($a, $b = 'ASC')
     {
