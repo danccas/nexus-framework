@@ -1,10 +1,10 @@
-namespace App\Http\Nexus\Views;
+namespace App\Http\Nexus\Views{{ $context2 }};
 
 use Core\Nexus\Tablefy;
 use Core\Nexus\Header;
 use Core\Nexus\Action;
 use Core\Request;
-use App\Models\{{ $model }};
+use App\Models\{{ $context . $model }};
 
 class {{ $name }}TableView extends Tablefy
 {

@@ -1,5 +1,6 @@
 
-  ## Code Automatic Nexus
+
+    ## Code Automatic Nexus
   public function {{ $name }}({{ $arguments }})
   {
     {{ $code }}

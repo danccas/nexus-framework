@@ -2,7 +2,7 @@
 namespace Core;
 
 class JSON {
-  private function utf8ize( $mixed ) {
+  private static function utf8ize( $mixed ) {
     if (is_array($mixed)) {
         foreach ($mixed as $key => $value) {
             $mixed[$key] = static::utf8ize($value);

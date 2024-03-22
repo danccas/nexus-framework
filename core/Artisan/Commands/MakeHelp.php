@@ -33,6 +33,13 @@ class MakeHelp
           'name'   => $table[1],
       ]);
     }
+    public static function checkDirectory($uri) {
+      echo "Directory: " . $uri . "\n";
+      $carpeta = dirname($uri);
+      echo "DD: " . $carpeta . "\n";
+      @mkdir($carpeta, 0777, true);
+      return $uri;
+    }
     public static function createMethod($file, $name, $arguments, $code, $return) {
       if(!file_exists($file)) {
         return false;
@@ -51,10 +58,10 @@ class MakeHelp
 
       $realCode .= "\n" . $code;
 
-      file_put_contents($file, $realCode . "\n}");
+      file_put_contents($file, $realCode . "}\n");
       echo "Append: {$file} \n";
     }
-    public static function createModel($file, $dsn, $table, $name, $columns) {
+    public static function createModel($file, $dsn, $context, $table, $name, $columns) {
       if(file_exists($file)) {
         echo "File exists: app\\Models\\" . $name . ".php\n";
         return;
@@ -67,57 +74,74 @@ class MakeHelp
         'model' => $name,
         'view'  => $view,
         'columns' => $columns,
+        'context' => !empty($context) ? '\\' . $context : '',
       ])->render();
-
+      $file = static::checkDirectory($file);
       file_put_contents($file, "<?php\n" . $code);
       echo "Created: app\\Models\\" . $name . ".php\n";
     }
-    public static function createController($file, $model) {
+    public static function createController($file, $context, $model, $instance, $view) {
       if(file_exists($file)) {
-        echo "File exists: app\\Http\\Controllers\\" . $model . "Controller.php\n";
+        echo "File exists: app\\Http\\Controllers\\" . $context . $model . "Controller.php\n";
         return;
       }
-      $view = str($model)->studlyToSnake();
+      if(!empty($context)) {
+        $view = str($context)->lower() . '.' . $view;
+      }
       $format = __DIR__ . '/../../Formats/controller.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
+        'context' => !empty($context) ? str_replace('/', '\\', $context) . '\\' : '',
+        'context2' => !empty($context) ? '\\' . $context : '',
+        'instance' => $instance,
       ])->render();
+      $file = static::checkDirectory($file);
       file_put_contents($file, "<?php\n" . $code);
-      echo "Created: app\\Http\\Controllers\\" . $model . "Controller.php\n";
+      echo "Created: app\\Http\\Controllers\\" . $context . $model . "Controller.php\n";
     }
-    public static function createTableView($file, $name, $table, $model, $columns) {
+    public static function createTableView($file, $name, $context, $table, $model, $instance, $columns, $view) {
       @mkdir(app()->dir() . 'app/Http/Nexus');
       @mkdir(app()->dir() . 'app/Http/Nexus/Views');
       @mkdir(app()->dir() . 'app/Http/Nexus/Actions');
-      $view = str($model)->studlyToSnake();
       $format = __DIR__ . '/../../Formats/tableview.blade.php';
+      if(!empty($context)) {
+        $view = str($context)->lower() . '.' . $view;
+      }
       $code = (new Blade($format))->verbose(false)->append([
         'name'  => $name,
         'table' => $table,
         'model' => $model,
-        'view'  => $view,
-        'columns' => $columns
+        'columns' => $columns,
+        'instance' => $instance,
+        'view' => $view,
+        'context'  => !empty($context) ? $context . '\\' : '',
+        'context2' => !empty($context) ? '\\' . $context : '',
       ])->render();
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, "<?php\n" . $code);
         echo "Created: {$file}\n";
       }
     }
-    public static function createViews($directory, $model, $columns) {
+    public static function createViews($directory, $context, $model, $columns, $view, $instance) {
       if(!file_exists($directory)) {
-        @mkdir($directory);
+        $directory = static::checkDirectory($directory);
         echo "Created directory Views: " . $directory . "\n";
       }
-      $view = str($model)->studlyToSnake();
+      if(!empty($context)) {
+        $view = str($context)->lower() . '.' . $view;
+      }
 
       $format = __DIR__ . '/../../Formats/view_index.blade.php';
       $code = (new Blade($format))->verbose(false)->append([
         'create' => $view . '.create',
         'repository'  => $view . '.repository',
+        'instance' => $instance,
       ])->render();
       $file = $directory . 'index.blade.php';
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, $code);
       }
 
@@ -126,9 +150,11 @@ class MakeHelp
         'model' => $model,
         'view'  => $view,
         'columns' => $columns,
+        'instance' => $instance,
       ])->render();
       $file = $directory . 'show.blade.php';
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, $code);
       }
 
@@ -136,9 +162,11 @@ class MakeHelp
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
+        'instance' => $instance,
       ])->render();
       $file = $directory . 'edit.blade.php';
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, $code);
       }
 
@@ -146,9 +174,11 @@ class MakeHelp
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
+        'instance' => $instance,
       ])->render();
       $file = $directory . 'form.blade.php';
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, $code);
       }
 
@@ -156,9 +186,11 @@ class MakeHelp
       $code = (new Blade($format))->verbose(false)->append([
         'model' => $model,
         'view'  => $view,
+        'instance' => $instance,
       ])->render();
       $file = $directory . 'create.blade.php';
       if(!file_exists($file)) {
+        $file = static::checkDirectory($file);
         file_put_contents($file, $code);
       }
       echo "Created Views: " . $model . "\n";

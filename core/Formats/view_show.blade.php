@@ -7,7 +7,7 @@
 @foreach($columns->toArray() as $c)
       <tr>
         <th>{{ $c['name']}}</th>
-        <td>{{ "{"."{" }} ${{ $view }}->{{ $c['name'] }} {{"}"."}"}}</td>
+        <td>{{ "{"."{" }} ${{ $instance }}->{{ $c['name'] }} {{"}"."}"}}</td>
       </tr>
 @endforeach
     </table>

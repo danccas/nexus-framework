@@ -1,4 +1,4 @@
-namespace App\Models;
+namespace App\Models{{ $context }};
 
 use Core\Model;
 use Core\Formity;
@@ -19,8 +19,8 @@ $fillable = array_map(function($n) {
     protected $fillable = ['{{ implode("', '", $fillable) }}'];
 
     protected $casts = [
-@foreach($columns as $c)
-      '{{ $c->name }}' => '{{ $c->cast }}',
+@foreach($columns->toArray() as $c)
+      '{{ $c['name'] }}' => '{{ $c['cast'] }}',
 @endforeach
     ];
 

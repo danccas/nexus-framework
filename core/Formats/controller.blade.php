@@ -1,9 +1,9 @@
-namespace App\Http\Controllers;
+namespace App\Http\Controllers{{ $context2 }};
 
 use Core\Controller;
 use Core\Request;
 use Core\Response;
-use App\Models\{{ $model }};
+use App\Models\{{ $context . $model }};
 
 class {{ $model }}Controller extends Controller
 {
@@ -13,17 +13,17 @@ class {{ $model }}Controller extends Controller
     return view('{{ $view }}.index');
   }
 
-  public function show({{ $model }} ${{ $view }})
+  public function show({{ $model }} ${{ $instance }})
   {
-    return view('{{ $view }}.show',compact('{{ $view}}'));
+    return view('{{ $view }}.show',compact('{{ $instance }}'));
   }
 
-
-  function create() {
+  public function create() {
     $form = {{ $model }}::form();
     return view('{{ $view }}.create', compact('form'));
   }
-  function store(Request $request)
+
+  public function store(Request $request)
   {
     $form = {{ $model }}::form();
     if (!$form->valid()) {
@@ -34,14 +34,14 @@ class {{ $model }}Controller extends Controller
     return reponse()->redirect('{{ $view }}.index');
   }
 
-
-  public function edit({{ $model }} ${{ $view }})
+  public function edit({{ $model }} ${{ $instance }})
   {
     $form = {{ $model }}::form();
-    $form->setPreData((array) ${{ $view }}->toArray());
-    return view('{{ $view }}.edit', compact('{{ $view }}', 'form'));
+    $form->setPreData((array) ${{ $instance }}->toArray());
+    return view('{{ $view }}.edit', compact('{{ $instance }}', 'form'));
   }
-  public function update({{ $model }} ${{ $view }})
+
+  public function update({{ $model }} ${{ $instance }})
   {
     $form = {{ $model }}::form();
     if (!$form->valid()) {
@@ -49,7 +49,7 @@ class {{ $model }}Controller extends Controller
     }
 
     $data = $form->data();
-    ${{ $view }}->update($data);
-    return reponse()->redirect('{{ $view }}.index');
+    ${{ $instance }}->update((array) $data);
+    return response()->redirect('{{ $view }}.index');
   }
 }

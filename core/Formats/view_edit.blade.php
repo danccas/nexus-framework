@@ -3,7 +3,8 @@
 {{ '@' }}section('content')
 <div class="card">
     <div class="card-body">
-        {{ "{{ \$form->submit('" . $view . ".update', $" . $view . "->id)->begin() }}" }}
+        {{ "{{ \$form->submit('" . $view . ".update', $" . $instance . "->id)->begin() }}" }}
+
             <div class="modal-body">
                 {{ '@' }}method('PUT')
                 {{ '@' }}include('{{ $view }}.form')
@@ -11,7 +12,9 @@
             <div class="hstack gap-2 justify-content-end">
                 <button class="btn btn-primary" type="submit">Actualizar</button>
             </div>
+
             {{ "{{ \$form->end() }}" }}
+
     </div>
 </div>
 {{ '@' }}endsection
