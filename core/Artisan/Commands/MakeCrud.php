@@ -124,7 +124,7 @@ class MakeCrud extends Command
 
 
       $view = str($this->input('model'))->studlyToSnake();
-
+      $nameRoute2 = $nameRoute;
       if(!empty($nameContext)) {
         $nameRoute2 = str($nameContext)->lower() . '.' . $nameRoute;
         $nameTableView = str_replace('/', '\\', $nameContext) . '\\' . $nameTableView;

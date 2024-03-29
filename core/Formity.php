@@ -126,6 +126,10 @@ class Formity
       }
     }
   }
+  public function obfuscate($x) {
+    $this->obfuscate = !!$x;
+    return $this;
+  }
   public function setSecurity($x)
   {
     $this->obfuscate = $x;
@@ -314,6 +318,20 @@ class Formity
         }
       }
     }
+  }
+  function jsSerialize($fnName) {
+    $ce = $this;
+    \Core\Blade::partView('scripts', function($params) use($ce, $fnName) {
+      echo '<script>function ' . $fnName . '() {var data = {}; $("#' . $ce->id . '").serializeArray().map(function(x){data[x.name] = x.value;}); return data; }</script>';
+    });
+    return $this;
+  }
+  function jsOnSubmit($fnName) {
+    $ce = $this;
+    \Core\Blade::partView('scripts', function($params) use($ce, $fnName) {
+      echo '<script>$("#' . $ce->id . '").submit((e) => { e.preventDefault(); ' . $fnName . '(); });</script>';
+    });
+    return $this;
   }
   function isValid(&$error = null)
 	{

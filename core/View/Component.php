@@ -38,6 +38,11 @@ class Component {
       $value = preg_replace('/(\w+):/i', '"\1":', $value);
       $this->attrs[str_replace(':json', '', $name)] = json_decode($value, true);
     } else {
+      if($value === 'true') {
+        $value = true;
+      } elseif($value === 'false') {
+        $value = false;
+      }
       $this->attrs[$name] = $value;
     }
     return $this;

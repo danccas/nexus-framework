@@ -11,12 +11,18 @@ class Tablefy extends Component {
   protected $uniq  = null;
   protected $model = null;
   protected $route = null;
+  protected $filter = null;
   protected $enumerate = false;
   protected $selectable =  false;
   protected $contextmenu = true;
   protected $draggable = false;
   protected $sorter = true;
   protected $countSelectable = 5;
+  protected $tocallfilter = null;
+  protected $fndata = null;
+  protected $start = true;
+  protected $refresh = true;
+  protected $search  = true;
   protected $message;
     /**
      * Create a new component instance.
@@ -69,26 +75,32 @@ class Tablefy extends Component {
         'request' => [
           'url' => $route->link(),
           'type' => 'POST',
-          'data' => 'tablefy_filters',
+          'data' => $this->fndata ?? 'tablefy_data',
         ],
+        'toCallFilter' => $this->tocallfilter,
         'enumerate' => $this->enumerate,
         'selectable' => $this->selectable,
         'contextmenu' => $this->contextmenu,
         'draggable'   => $this->draggable,
         'sorter'      => $this->sorter,
         'countSelectable' => $this->countSelectable,
+        'start' => $this->start,
+        'refresh' => $this->refresh,
+        'search'  => $this->search,
       ];
       if(!empty($headers)) {
         $params['headers'] = $headers;
       }
       $params = array_filter($params);
       foreach($this->attrs() as $key => $val) {
-        $params[$key] = $val;
+        //if(!isset($params[$key])) {
+          $params[$key] = $val;
+        //}
       }
       return '<table id="' . $this->uniq . '"></table>'.
         '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
-                    . 'var ' . $this->uniq . " = new Tablefy(" . \Core\JSON::encode($params) . ').init(true);'
+                    . 'var ' . $this->uniq . " = new Tablefy(" . \Core\JSON::encode($params) . ').init();'
                     . "});"
                     . '</script>';
     }

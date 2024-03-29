@@ -25,6 +25,10 @@ class Identify extends Model
   static function user() {
     return static::current();
   }
+  public function asign($data) {
+    static::current()->fill($data);
+    return $this;
+  }
   public function is_valid()
   {
     return static::current()->is_valid;

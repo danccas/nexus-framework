@@ -34,6 +34,7 @@ class Tablefy implements \JsonSerializable
     private $events = [];
     private $executed = false;
     private $inputs   = [];
+    protected $injects  = [];
 
     public $modifiable_columns  = [];
     private $fillable_columns   = [];
@@ -50,6 +51,7 @@ class Tablefy implements \JsonSerializable
     public $querys = [];
 
     protected $_view = null;
+    private $_nodata = false;
 
     protected $listCbs = [];
 
@@ -76,6 +78,10 @@ class Tablefy implements \JsonSerializable
     public function route()
     {
         return $this->directRoute;
+    }
+    public function nodata($text = 'No data') {
+      $this->_nodata = $text;
+      return $this;
     }
     public function query($q, $params = [])
     {
@@ -162,6 +168,11 @@ class Tablefy implements \JsonSerializable
             if (is_array($input['filters'])) {
                 $this->filters = $input['filters'];
             }
+        }
+        if (!empty($input['inputs'])) {
+          if (is_array($input['inputs'])) {
+            $this->injects = $input['inputs'];
+          }
         }
         return $this;
     }
@@ -274,13 +285,20 @@ class Tablefy implements \JsonSerializable
             return $this;
         }
         $this->executed = true;
+        if(!empty($this->_nodata)) {
+          $this->setItems([
+            'success' => false,
+            'message' => $this->_nodata,
+            'result'  => []
+          ]);
+          return $this;
+        }
         $this->prepare();
         if (!$this->is_appends) {
             $this->appends([]);
         }
         if(method_exists($this, 'component')) {
           $this->component();
-
         }
         if (!empty($this->model)) {
             $name = $this->model;
@@ -687,6 +705,10 @@ class Tablefy implements \JsonSerializable
     public function toArray()
     {
       $this->execute();
+
+      if(!empty($this->_nodata)) {
+        return $this->items;
+      }
 
       $listado = !empty($this->items) ? (is_array($this->items) ? $this->items : $this->items->toArray()) : [];
       $listado = array_map(function($n) {
