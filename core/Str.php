@@ -8,8 +8,8 @@ class Str {
   }
   function notilde() {
     return iconv('UTF-8', 'ASCII//TRANSLIT', $this->text);
-    $noTildes = strtr($this->text, 
-        'áéíóúüÁÉÍÓÚÜ', 
+    $noTildes = strtr($this->text,
+        'áéíóúüÁÉÍÓÚÜ',
         'aeiouuAEIOUU'
     );
     return $noTildes;
@@ -35,6 +35,9 @@ class Str {
   }
   function lower() {
     return strtolower($this->text);
+  }
+  function upper() {
+    return strtoupper($this->text);
   }
   function __toString() {
     return $this->text;
