@@ -68,6 +68,9 @@ class Session
     }
     return null;
   }
+  public static function initialized() {
+    return !(session_status() === PHP_SESSION_NONE);
+  }
 
   public static function r($key, $child = false)
   {
