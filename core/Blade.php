@@ -240,7 +240,27 @@ class Blade
                 return $rp;
             } elseif ($res['type'] == 'tablefy') {
                 $tuq = 't' . uniqid();
-                static::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
+		static::preCoding('styles', '<link href="/assets/libs/tablefy/tablefy.min.css" rel="stylesheet" type="text/css" />');
+		$code = '<script>'
+                    . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
+                    . 'var ' . $tuq . " = new Tablefy(<?= \Core\JSON::encode(array_merge(" . $res['params'] . ", [
+                        'dom' => '#" . $tuq . "',
+                        'request' => array(
+                            'url' => '" . route($res['name']) . "',
+                            'type' => 'POST',
+                            'data' => 'tablefy_filters',
+                        ),
+                        'enumerate' => false,
+                        'selectable' => false,
+                        'contextmenu' => true,
+                        'draggable' => false,
+                        'sorter' => true,
+			'countSelectable' => 5,
+			'start' => true,
+                    ])) ?>).init();"
+                    . "});"
+		    . '</script>';
+		return '<table id="' . $tuq . '"></table>' . $code;
                 static::preCoding('scripts', '<script>'
                     . "require(['/assets/libs/tablefy/tablefy.min.js?<?= time() ?>'], function() {"
                     . 'var ' . $tuq . " = new Tablefy(<?= \Core\JSON::encode(array_merge(" . $res['params'] . ", [
@@ -256,7 +276,7 @@ class Blade
                         'draggable' => false,
                         'sorter' => true,
                         'countSelectable' => 5,
-                    ])) ?>).init(true);"
+                    ])) ?>).init();"
                     . "});"
                     . '</script>');
                 return '<table id="' . $tuq . '"></table>';

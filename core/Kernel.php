@@ -189,7 +189,7 @@ class Kernel
             }
         }
         if (!$is_match) {
-            if (isset($_GET['ddebug']) || true) {
+            if(config('app.debug')) {
                 echo $this->debug();
                 exit;
             } else {
@@ -199,7 +199,8 @@ class Kernel
     }
     public function console() {
       global $argc, $argv;
-        $console = new Artisan($argc, $argv);
-        return $console->output();
+      $kernel = new \App\Console\Kernel();
+      $console = new Artisan($kernel, $argc, $argv);
+      return $console->output();
     }
 }

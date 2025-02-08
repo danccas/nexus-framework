@@ -91,7 +91,8 @@ class Route
     }
     public function where($key, $val)
     {
-        $this->wheres[$key] = $val;
+      $this->wheres[$key] = $val;
+      return $this;
     }
     private function getRegular($key)
     {
@@ -218,6 +219,9 @@ class Route
             $regexp = "(?P<" . $n['id'] . ">" . $regexp . ")";
             return $regexp;
         }, $route, -1, $cantidad);
+        //if(isset($_GET['demo']) && strpos($route, 'razon') !== false) {
+          //dd($expresion_regular);
+        //}
         if ($cantidad != 0) {
             $expresion_regular = '/^' . $expresion_regular . ($started ? '\//' : '$/');
             $e = preg_match($expresion_regular, ($started ? $query : trim($query, '/')), $r) ? array_merge(array('route' => $query), $r) : FALSE;

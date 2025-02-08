@@ -163,7 +163,26 @@ class Response
     $this->format = 'download';
     $this->pathFile = $file;
 		return $this;
-	}
+  }
+  public function file($file, $headers = [])
+  {
+    if (empty($headers)) {
+        $this->header('Content-Disposition', 'inline');
+        $mimeType = mime_content_type($file) ?: 'application/octet-stream';
+        $this->header('Content-Type', $mimeType);
+    }
+
+    if (!empty($headers)) {
+        foreach ($headers as $key => $val) {
+            $this->header($key, $val);
+        }
+    }
+
+    $this->format = 'download';
+    $this->pathFile = $file;
+
+    return $this;
+  }
 	public function back()
 	{
 		$this->format = 'redirect';

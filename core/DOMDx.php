@@ -29,7 +29,7 @@ class DOMDx {
     public function cache($key) {
         $cache = cache($key)->dump();
         $this->set(JSON::decode(JSON::encode($cache->data)));
-        $this->mfooter = date('d/m/Y h:i:s A', $cache->time);
+	$this->mfooter = date('d/m/Y h:i:s A', $cache->time);
         return $this;
     }
 		public function map($callback) {
