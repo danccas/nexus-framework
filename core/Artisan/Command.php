@@ -3,8 +3,12 @@ namespace Core\Artisan;
 
 class Command {
   protected $attrs = [];
+  protected $signature = '';
 
   function __construct() {
+  }
+  public function getSignature() {
+    return $this->signature;
   }
   function setArgs($args) {
     $args = array_slice($args, 2);

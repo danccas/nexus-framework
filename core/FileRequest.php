@@ -28,9 +28,10 @@ class FileRequest
     }
   }
   public function all() {
-    $i = 0;
+    $i = -1;
     $ce = $this;
     return array_map(function($n) use(&$i, &$ce) {
+      $i++;
       return new static([$ce->files[$i]]);
     }, $this->files);
   }
