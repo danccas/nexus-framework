@@ -115,6 +115,7 @@ class Model implements \JsonSerializable
         if (!isset($this->{$field_id}) || empty($this->{$field_id})) {
             return collect([]);
         }
+        return (new $model)->newQuery()->where($fk_id, '=', $this->{$field_id});
         return (new $model)->newQueryWithoutScopes()->where($fk_id, '=', $this->{$field_id});
         return $model::query()->where($fk_id, '=', $this->{$field_id});
     }

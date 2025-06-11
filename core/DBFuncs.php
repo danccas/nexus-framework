@@ -13,7 +13,7 @@ class DBFuncs
     protected $cache = false;
     protected $cacheExpire = -1;
     protected $whenConsultCache = null;
-    protected $flog  = __DIR__ . '/db.log';
+    protected $flog  = '/tmp/db.log';
     protected $fileCache = __DIR__ . '/db.cache.json';
     protected $type;
     
@@ -76,7 +76,7 @@ class DBFuncs
             $fieldlist = '(' . implode(', ', $fieldlist) . ') VALUES (' . implode(', ', $valuelist) . ')';
         }
     }
-    function  insert($table, $fields, $ignore = false)
+    function  insert($table, $fields, $ignore = false, $extra_prepared = [])
     {
         if (empty($fields)) {
             return false;
@@ -89,7 +89,7 @@ class DBFuncs
         if (!empty($duplelist)) {
             $sql .= ' ON DUPLICATE KEY UPDATE ' . $duplelist;
         }
-
+        $datalist = array_merge($datalist, $extra_prepared);
         $this->exec($sql, $datalist);
 
         return $this->last_insert_id();

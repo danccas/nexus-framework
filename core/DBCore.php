@@ -11,6 +11,7 @@ class DBCore extends \Core\DBFuncs
   protected $established = false;
   protected $connection = null;
   protected static $listConnection = [];
+  protected static $cacheQuerys    = [];
   protected static $default_cdr;
   protected $query = null;
   protected $cdr;
@@ -80,8 +81,16 @@ class DBCore extends \Core\DBFuncs
   function exec($query, $prepare = null, $is_cmd = false)
   {
     $this->establishConnection();
-    if ($this->log) {
-      _log($this->flog, $query, $prepare, $is_cmd);
+    if ($this->log || true) {
+//      _log($this->flog, $query, $prepare, $is_cmd);
+    }
+    if(false) {
+      $token = md5(json_encode([$query, $prepare]));
+      if(!empty(static::$cacheQuerys[$token])) {
+        _log($this->flog, 'Se encontró el Caché temporal en: ', $query, $prepare);
+        return static::$cacheQuerys[$token];
+      }
+      return static::$cacheQuerys[$token] = $this->connection()->execute($query, $prepare);
     }
     return $this->connection()->execute($query, $prepare);
   }
@@ -91,14 +100,16 @@ class DBCore extends \Core\DBFuncs
     $time_start = microtime(true);
     $is_cached = false;
     $model = null;
+    $token = null;
     if (is_null($sql)) {
       if ($this->query instanceof Builder) {
         $comodin = $this->query->prepareQuery();
         if ($comodin === null) {
           return new \Core\Concerns\Collection([]);
         }
-        $sql = $comodin[0];
+        $sql     = $comodin[0];
         $prepare = $comodin[1];
+        $token   = $comodin[2] . ($first ? 1 : 0);
         unset($comodin);
         if ($model = $this->query->getModel()) {
         }
@@ -107,8 +118,8 @@ class DBCore extends \Core\DBFuncs
       }
     }
     if ($this->cache) {
-      $token = 'query_' . md5(JSON::encode([$sql, $prepare]));
-      $cache = cache($token)->expire($this->cacheExpire);
+      $token2 = 'query_' . md5(JSON::encode([$sql, $prepare]));
+      $cache = cache($token2)->expire($this->cacheExpire);
       if (!$cache->hasExpired()) {
         $rp = $cache->dump();
         $unix = $rp->time;
@@ -117,18 +128,37 @@ class DBCore extends \Core\DBFuncs
         goto saltarCache;
       }
     }
+    
     $unix = time();
-    $result = $this->exec($sql, $prepare, false);
-    if ($result === false) {
-      $rp = false;
+    if(!empty($token) && !empty(static::$cacheQuerys[$token])) {
+      _log($this->flog, 'Se encontró el Caché temporal en: ', $sql, $prepare);
+      $rp = static::$cacheQuerys[$token];
+      $is_cached = true;
+      goto saltarCache;
     } else {
-      $rp = $this->engine()->fetch($result, $first);
+      $result = $this->exec($sql, $prepare, false);
+      if ($result === false) {
+        $rp = false;
+      } else {
+        $rp = $this->engine()->fetch($result, $first);
+        static::$cacheQuerys[$token] = $rp;
+      }
     }
     $diff = microtime(true) - $time_start;
     $sec = intval($diff);
     $micro = $diff - $sec;
-    if ($diff > 1) {
-      file_put_contents('/tmp/query_slow.log', date('Y-m-d H:i:s') . ' => [' . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . '] ' . $sql . " = " . JSON::encode($prepare) . "\n\n", FILE_APPEND | LOCK_EX);
+
+    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+    if(isset($trace[2])) {
+      $file = $trace[2]['file'] ?? 'unknown'; // Archivo de origen
+      $line = $trace[2]['line'] ?? 0;
+    } else {
+      $file = end($trace)['file'] ?? 'unknown';
+      $line = end($trace)['line'] ?? 0;
+    }
+
+    if ($diff >= config('constants.db_log_timeout') && ((config('constants.db_log_cli') && NEXUS_CLI) || config('constants.db_log_all'))) {
+      file_put_contents('/tmp/query_slow.log', date('Y-m-d H:i:s') . ' => [' . date('H:i:s', mktime(0, 0, $sec)) . str_replace('0.', '.', sprintf('%.3f', $micro)) . '] ' . $file . ' (línea ' . $line . ') => ' . $sql . " = " . JSON::encode($prepare) . "\n\n", FILE_APPEND | LOCK_EX);
     }
 
     if ($this->cache && !empty($cache)) {

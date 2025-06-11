@@ -94,6 +94,10 @@ class DBPSQL
     {
         $ce = $this;
         $ce->prepares_mod = [];
+        $token = json_encode([$this->action, $this->selects, $this->tables, $this->wheres, $this->orders]);
+        //_log('/tmp/query_slow.log', 'Preparando token: ', $token);
+        $token = md5($token);
+
         if (!empty($this->wheres) && in_array($this->action, ['get', 'update','delete'])) {
             $this->wheres = array_map(function ($n) use ($ce) {
                 $uu = 'v' . uniqid();
@@ -123,7 +127,8 @@ class DBPSQL
             #						if(in_array('robusto.terminal_permiso', $this->tables)) {
             #							dd([$fieldlist, $datalist, $duplelist]);
             #						}
-            return [$rp, $datalist];
+            return [$rp, $datalist, null];
+
         } elseif ($this->action == 'update') {
             if (empty($ce->prepares)) {
                 return null;
@@ -135,14 +140,14 @@ class DBPSQL
             if (!empty($this->wheres)) {
                 $rp1 .= 'WHERE ' . implode(' AND ', $this->wheres) . "\n";
             }
-            return [$rp1, array_merge($this->prepares_mod, $datalist)];
+            return [$rp1, array_merge($this->prepares_mod, $datalist), null];
 
         } elseif ($this->action == 'delete') {
             $rp = 'DELETE FROM ' . implode(', ', $this->tables) . "\n";
             if (!empty($this->wheres)) {
                 $rp .= 'WHERE ' . implode(' AND ', $this->wheres) . "\n";
             }
-            return [$rp, $this->prepares_mod];
+            return [$rp, $this->prepares_mod, null];
 
         } elseif ($this->action == 'get') {
             $rp = 'SELECT ' . (empty($this->selects) ? '*' : implode(', ', $this->selects)) . "\n";
@@ -157,7 +162,7 @@ class DBPSQL
                 $rp .= 'ORDER BY ' . implode(', ', $this->orders);
             }
             #						print_r($rp);
-            return [$rp, $this->prepares_mod];
+            return [$rp, $this->prepares_mod, $token];
         }
     }
     public function connect()

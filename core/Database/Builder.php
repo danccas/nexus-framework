@@ -88,6 +88,11 @@ class Builder
         $this->dbconnect->engine()->whereRaw($a . ' IS NULL');
         return $this;
     }
+    public function whereRaw($a)
+    {
+        $this->dbconnect->engine()->whereRaw($a);
+        return $this;
+    }
     public function orderBy($campo, $by = 'ASC')
     {
         $this->action = 'get';

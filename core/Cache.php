@@ -155,4 +155,8 @@ class Cache
         }
         return $this;
     }
+    public function toArray() {
+      $data = $this->data();
+      return json_decode(json_encode($data), true);
+    }
 }
